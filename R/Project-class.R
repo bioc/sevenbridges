@@ -243,9 +243,14 @@ Project <- setRefClass("Project", contains = "Item",
                  
                                    for(fl in filename){
                                        message(fl)
-                                       upload(fl, metadata = metadata, 
-                                              overwrite = overwrite,
-                                              ...)
+                                       if(file.info(fl)$size > 0){
+                                           upload(fl, metadata = metadata, 
+                                                  overwrite = overwrite,
+                                                  ...)
+                                       }else{
+                                           warning("skip uploading: empty file")
+                                       }
+                                      
                                    }
                                    return()
                                }
@@ -374,14 +379,22 @@ Project <- setRefClass("Project", contains = "Item",
                            task_add = function(
                                name = NULL,
                                description = NULL,
+                               batch = NULL,
                                app = NULL,
                                inputs = NULL, ...){
 
+                               
                             body = list(name = name,
                                 description = description,
                                 project = id,
                                 app = app,
                                 inputs = lapply(inputs, asTaskInput))
+                            
+                            if(!is.null(batch)){
+                                
+                                body = c(batch, body)
+      
+                            }
                             
                             res <- auth$api(path = "tasks", body = body, method = "POST", ...)
                             res <- .asTask(res)

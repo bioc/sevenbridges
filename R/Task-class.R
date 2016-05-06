@@ -1,6 +1,9 @@
 .ts <- c("id", "name", "description", "status", "app", "type",
          "created_by", "executed_by", "start_time", "end_time", 
-         "execution_status", "price", "inputs", "outputs", "project")
+         "execution_status", "price", "inputs", "outputs", "project",
+         "batch", "batch_input", "batch_by",  "parent", "batch_group")
+
+
 
 Task <- setRefClass("Task", contains = "Item",
                     fields = list(id = "characterORNULL",
@@ -18,18 +21,20 @@ Task <- setRefClass("Task", contains = "Item",
                         inputs = "listORNULL",
                         outputs = "listORNULL",
                         project = "characterORNULL",
-                        message = "characterORNULL",
-                        steps_completed = "numericORNULL",
-                        steps_total = "numericORNULL"),
+                        batch = "logicalORNULL",
+                        batch_input = "characterORNULL",
+                        batch_by = "listORNULL",
+                        parent = "characterORNULL",
+                        batch_group = "listORNULL"
+                       
+                        ),
                     methods = list(
-                        initialize = function(execution_status = NULL, ...){
-                            if(length(execution_status)){
-                                message <<- execution_status$message
-                                steps_completed <<- status$jobs_completed
-                                steps_total <<- status$jobs_total
-                            }
-                            callSuper(execution_status = execution_status, ...)
-                        },
+                        # initialize = function(execution_status = NULL, ...){
+                        #     if(!is.null(execution_status)){
+                        #         .self$execution_status <<- do.call(EStatus, execution_status)
+                        #     }
+                        #     callSuper(...)
+                        # },
                         update = function(name = NULL,
                             description = NULL,
                             inputs = NULL, ...){
@@ -265,11 +270,110 @@ setMethod("asTaskInput", "Files", function(object){
              path = unbox(object$id), 
              name = unbox(object$name))
 })
+
+
 setMethod("asTaskInput", "FilesList", function(object){
-     lapply(object, function(x){
-         asTaskInput(x)
+    lapply(object, function(x){
+        asTaskInput(x)
     })
 })
-setMethod("asTaskInput", "ANY", function(object){
-    return(as.list(object))
+
+setMethod("asTaskInput", "list", function(object){
+
+    id.file <- sapply(object, is, "Files")
+    id.lst <- sapply(object, is, "FilesList")
+    if(sum(id.file)){
+        res.f <- object[id.file]
+    }else{
+        res.f <- NULL
+    }
+    if(sum(id.lst)){
+
+        res.l <- object[id.lst]
+        res.l <- do.call(c, lapply(object[id.lst], function(x){
+            # x here is FilesList
+            lapply(x, function(x) x)
+            # return a pure list
+        }))
+    }else{
+        res.l <- NULL
+    }
+    res <- c(res.f, res.l)
+    if(length(res)){
+        return(asTaskInput(FilesList(res)))
+    }else{
+        stop("Not every list entries are Files or FilesList object")
+    }
+
 })
+
+setMethod("asTaskInput", "ANY", function(object){
+    object
+})
+
+# setMethod("asTaskInput", "ANY", function(object){
+#     return(as.list(object))
+# })
+
+
+#' batch function for task batch execution
+#' 
+#' batch function for task batch execution
+#' 
+#' @param input character, ID of the input on which you wish to batch on. 
+#' You would usually batch on the input containing a list of files. 
+#' If left out, default batching criteria defined in the app is used.
+#' @param criteria a character vector, for example. 
+#' \code{c("metadata.sample_id", "metadata.library_id")}. The meaning of the 
+#' above batch_by dictionary is - group inputs (usually files) first on sample ID 
+#' and then on library ID. If NULL, using type "ITEM" by default.
+#' @param type Criteria on which to batch on - can be in two formats."ITEM" and 
+#' "CRITERIA". If you wish to batch per item in the input (usually a file) 
+#' using "ITEM". If you wish a more complex criteria, specify the "CRITERIA"
+#' on which you wish to group inputs on. Please check examples. 
+#' @return a list of 'batch_input' and 'batch_by' used for task batch
+#' @export batch
+#' @examples 
+#' batch(input = "fastq") # by ITEM
+#' batch(input = "fastq", c("metadata.sample_id", "metadata.library_id"))
+#' ## shorthand for this
+#' batch(input = "fastq", c("metadata.sample_id", "metadata.library_id"), type = "CRITERIA")
+batch = function(input = NULL,
+                 criteria = NULL,
+                 type = c("ITEM", "CRITERIA")){
+    
+    if(is.null(input)){
+        stop("Please specify the input id")
+    }
+    type = match.arg(type)
+    if(is.null(criteria)){
+        if(type == "CRITERIA"){
+            stop("Please provide cretieria, for example c(\"metadata.sample_id\")")
+        }
+    }else{
+        if(type == "ITEM"){
+            message("criteria provided, convert type from ITEM to CRITERIA")
+        }
+        type = "CRITERIA"
+    }
+    
+   
+    switch(type, 
+           ITEM = {
+               res = list(type = "ITEM")
+           },
+           CRITERIA = {
+               if(is.null(criteria)){
+                   
+               }else{
+                   res = list(
+                       type ="CRITERIA",
+                       criteria = criteria
+                   )
+               }
+           })
+    c(list(batch_input = input), list(batch_by = res))
+}
+
+
+
