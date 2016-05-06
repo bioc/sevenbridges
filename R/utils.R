@@ -352,8 +352,12 @@ m.match <- function(obj, id = NULL, name = NULL,
     }
 }
 
+## full = TRUE, show empty filed as well
 .showList <- function(x, space = "", full = FALSE){
     if(length(x)){
+        if(all(sapply(x, is.list))){
+            sapply(x, .showList, space = paste0(space, ""))
+        }
         if(!full){
             idx <- sapply(x, function(s){
                 if(is.character(s)){
@@ -365,6 +369,7 @@ m.match <- function(obj, id = NULL, name = NULL,
             })
             x <- x[idx]
         }
+
         for (fld in names(x)){
             if(all(is.character(x[[fld]]))){
                 msg <- paste0(x[[fld]], collapse = " \n ")
@@ -372,10 +377,15 @@ m.match <- function(obj, id = NULL, name = NULL,
             }else{
                 if(is(x[[fld]], "Meta")){
                     msg <- as.character(x[[fld]]$data)
+                    message(space, fld, " : ", msg) 
+                }else if(is.list(x[[fld]])){
+                    message(space, fld, " : ", length(x[[fld]]), " items")
+                    .showList(x[[fld]], space = paste0(space, "  "))
                 }else{
                     msg <- as.character(x[[fld]])
+                    message(space, fld, " : ", msg) 
                 }
-                message(space, fld, " : ", msg)                
+                             
             }
         }
     }
@@ -587,79 +597,6 @@ POST2 <- function (url = NULL, config = list(), ..., body = NULL, encode = c("mu
 
 ### lift lift lift!!!
 
-lift.rabix = function(input = NULL, output_dir = NULL, 
-                      shebang = "#!/usr/local/bin/Rscript") {
-   
-    opt_all_list = liftr::parse_rmd(input)
-    
-    inl <- IPList(lapply(opt_all_list$rabix$inputs, function(i){
-        do.call(sevenbridges::input, i)
-    }))
-    
-    ol <- lapply(inl, function(x){
-        .nm <- x$inputBinding$prefix
-        .t <- setdiff(x$type[[1]], "null")[[1]]
-        .type <- paste0('<', deType(.t), '>')
-        .o <- paste(.nm, .type, sep = "=")
-        .des <- x$description
-        .default <- x$default
-        if(!is.null(.default)){
-            .des <- paste0(.des, " [default: ", .default, " ]")
-        }
-        list(name = .o, description = .des)
-    })
-    
-   
-    if (is.null(output_dir)) 
-        output_dir = dirname(normalizePath(input))
-    tmp <- file.path(output_dir, opt_all_list$rabix$baseCommand)
-    con = file(tmp)
-    txt <- c(shebang, "'")
-    txt <- c(txt, paste("usage:", opt_all_list$rabix$baseCommand, 
-                        do.call(paste,lapply(ol, function(o) paste("[", o$name, "]")))))
-    txt <- c(txt, "options:")
-    for(i in 1:length(ol)){
-        txt <- c(txt, paste(" ", ol[[i]]$name, ol[[i]]$description))
-        
-    }
-    txt <- c(txt, "' -> doc")
-    
-    
-    
-    "library(docopt)
-    opts <- docopt(doc)
-    rmarkdown::render('/report/report.Rmd', BiocStyle::html_document(toc = TRUE),
-    output_dir = '.', params = lst)
-    " -> .final
-    
-    txt <- c(txt, .final)
-    
-    writeLines(txt, con = con)
-    close(con)
-    
-    
-    
-    ## insert the script
-    docker.fl <- file.path(normalizePath(output_dir), 'Dockerfile')
-    message(docker.fl)
-    
-    
-    ## add script
-    write(paste("COPY", basename(normalizePath(tmp)), "/usr/local/bin/"), 
-          file = docker.fl, 
-          append = TRUE)
-    write("RUN mkdir /report/", 
-          file = normalizePath(docker.fl), 
-          append = TRUE)
-    ## add report
-    report.file <- file.path(normalizePath(output_dir), basename(input))
-    file.copy(input, report.file)
-    write(paste("COPY", basename(input), "/report/"), 
-          file = docker.fl, 
-          append = TRUE)
-    
-}
-
 
 normalizeUrl <- function(x){
     if(!grepl("/$", x)){
@@ -730,5 +667,280 @@ iterId <- function(ids, fun, ...){
         res <- do.call(.newclass, res)
     }
     res
+}
+
+
+#' lift a docopt string
+#'
+#' lift a docopt string used for command line
+#'
+#' parse Rmarkdown header from rabix field
+#'
+#' @param input input Rmarkdown file or a function name (character)
+#' @aliases lift_docopt
+#' @return a string used for docopt
+#' @examples
+#' \dontrun{
+#' fl = system.file("examples/runif.Rmd", package = "liftr")
+#' opts = lift_docopt(fl)
+#' require(docopt)
+#' docopt(opts)
+#' docopt(lift_docopt("mean.default"))
+#' }
+lift_docopt = function(input){
+
+  if(file.exists(input)){
+    res = lift_docopt_from_header(input)
+  }else{
+    message("file doesn't exist, try to try this as a function")
+    res = lift_docopt_from_function(input)
+  }
+  res
+}
+
+
+lift_docopt_from_header = function(input){
+  opt_all_list = parse_rmd(input)
+  ol <- opt_all_list$rabix
+  .in <- ol$inputs
+  txt <- paste("usage:", ol$baseCommand, "[options]")
+  txt <- c(txt, "options:")
+
+  ol <- lapply(.in, function(x){
+    .nm <- x$prefix
+    .t <- x$type
+    .type <- paste0('<', deType(.t), '>')
+    .o <- paste(.nm, .type, sep = "=")
+    .des <- x$description
+    .default <- x$default
+    if(!is.null(.default)){
+      .des <- paste0(.des, " [default: ", .default, "]")
+    }
+    list(name = .o, description = .des)
+  })
+  for(i in 1:length(ol)){
+    txt <- c(txt, paste(" ", ol[[i]]$name, ol[[i]]$description))
+  }
+  paste(txt, collapse = "\n")
+}
+
+lift_docopt_from_function = function(input){
+
+  ol = opt_all_list = rdarg(input)
+
+  txt <- paste0("usage: ", input, ".R",  " [options]")
+
+
+  nms <- names(ol)
+  lst <- NULL
+
+  for(nm in nms){
+    .nm = paste0("--", nm)
+    .t = guess_type(nm, input)
+    .type = paste0('<', deType(.t), '>')
+    .o = paste(.nm, .type, sep = "=")
+    .des = ol[[nm]]
+    .def  = guess_default(nm, input)
+    if(!is.null(.def)){
+      .des <- paste0(.des, " [default: ", .def, "]")
+    }
+    lst = c(lst, list(list(name = .o, description = .des)))
+  }
+
+  for(i in 1:length(lst)){
+    txt <- c(txt, paste(" ", lst[[i]]$name, lst[[i]]$description))
+  }
+  ## Fixme:
+  paste(txt, collapse = "\n")
+}
+
+
+lift_cmd = function(input, output_dir = NULL, shebang = "#!/usr/local/bin/Rscript",
+                    docker_root = "/"){
+
+  if(file.exists(input)){
+    opt_all_list = parse_rmd(input)
+    if (is.null(output_dir))
+      output_dir = dirname(normalizePath(input))
+
+    tmp = file.path(output_dir, opt_all_list$rabix$baseCommand)
+    message("command line file: ", tmp)
+    con = file(tmp)
+    txt = lift_docopt(input)
+    txt = c(shebang, "'", paste0(txt, " ' -> doc"))
+    paste("library(docopt)\n opts <- docopt(doc) \n
+        rmarkdown::render('",
+          docker_root, basename(input), "', BiocStyle::html_document(toc = TRUE),
+        output_dir = '.', params = lst)
+    " )-> .final
+    txt <- c(txt, .final)
+    writeLines(txt, con = con)
+    close(con)
+  }else{
+    message("consider you passed a function name (character)")
+    if (is.null(output_dir))
+      output_dir = getwd()
+    .baseCommand <- paste0(input, ".R")
+    tmp = file.path(output_dir, .baseCommand)
+    message("command line file: ", tmp)
+    con = file(tmp)
+    txt = lift_docopt(input)
+    txt = c(shebang, "'", paste0(txt, " ' -> doc"))
+    txt = c(txt, "library(docopt)\n opts <- docopt(doc)")
+    .final = gen_list(input)
+    txt <- c(txt, .final)
+    writeLines(txt, con = con)
+    close(con)
+  }
+  Sys.chmod(tmp)
+  tmp
+}
+
+con_fun = function(type){
+  res = switch(deType(type),
+          int = "as.integer",
+          float = "as.numeric",
+          boolean = "as.logical",
+          NULL)
+  res
+}
+
+
+gen_list = function(fun){
+  lst = rdarg(fun)
+  lst = lst[names(lst) != "..."]
+  nms = names(lst)
+  txt = NULL
+  for(nm in nms){
+    .t = con_fun(guess_type(nm, fun))
+    if(!is.null(.t)){
+      txt = c(txt, paste0(nm, " = ", .t, "(", "opts$", nm, ")"))
+    }else{
+      txt = c(txt, paste0(nm, " = ", "opts$", nm))
+    }
+
+  }
+  txt = paste("list(", paste(txt, collapse = ","), ")")
+  paste("do.call(", fun, ",", txt, ")")
+
+}
+
+
+guess_type = function(nm, fun){
+  dl = formals(fun)
+  if(!is.null(dl[[nm]])){
+    .c <- class(dl[[nm]])
+    if(.c == "name"){
+      return("string")
+    }else{
+      return(deType(.c))
+    }
+
+  }else{
+    return("string")
+  }
+}
+
+guess_default = function(nm, fun){
+  dl = formals(fun)
+  if(!is.null(dl[[nm]])){
+    .c <- class(dl[[nm]])
+    if(.c == "name"){
+      return(NULL)
+    }else{
+      return(dl[[nm]])
+    }
+
+  }else{
+    return(NULL)
+  }
+}
+
+parse_rmd = function(input){
+    # locate YAML metadata block
+    doc_content = readLines(normalizePath(input))
+    header_pos = which(doc_content == '---')
+    
+    # handling YAML blocks ending with three dots
+    if (length(header_pos) == 1L) {
+        header_dot_pos = which(doc_content == '...')
+        if (length(header_dot_pos) == 0L) {
+            stop('Cannot correctly locate YAML metadata block.
+                 Please use three hyphens (---) as start line & end line,
+                 or three hyphens (---) as start line with three dots (...)
+                 as end line.')
+        } else {
+            header_pos[2L] = header_dot_pos[1L]
+        }
+    }
+    
+    doc_yaml = paste(doc_content[(header_pos[1L] + 1L):
+                                     (header_pos[2L] - 1L)],
+                     collapse = '\n')
+    yaml.load(doc_yaml)
+    }
+
+
+#' Set testing env
+#'
+#' Check if docker is installed, is running and has required images downloaded and if do creates container 
+#'
+#' @param docker_image required docker image with pre-installed bunny, default: tengfei/testenv
+#' @param data_dir direcotry with data which is mounted with container creation
+#' @export set_test_env
+#' @return docker stdout
+#' @examples
+#' \dontrun{
+#' set_test_env("tengfei/testenv")
+#' }
+
+set_test_env = function(docker_image, data_dir){
+  docker_machine_args <- "ls --filter state=Running --format '{{.Name}}'"
+  docker.vm <- system2("docker-machine", c(docker_machine_args), stdout=TRUE, stderr=TRUE)
+  envs <- substring(system2("docker-machine", c("env", docker.vm), stdout=TRUE, stderr=TRUE)[1:4], 8)
+  envs <- gsub("\"", "", unlist(strsplit(envs, "="))[c(FALSE,TRUE)])
+  Sys.setenv(DOCKER_TLS_VERIFY = envs[1], DOCKER_HOST = envs[2], DOCKER_CERT_PATH = envs[3], DOCKER_MACHINE_NAME = envs[4])
+  
+  docker_run_args <- paste("run --privileged --name bunny -v ", data_dir, ":/bunny_data -dit ", docker_image, sep="")
+  system2("docker", c(docker_run_args), stdout=TRUE, stderr=TRUE)
+  
+  #TODO some problems with docker inside docker (could be set from Dockerfile maybe)
+  system2("docker", c("exec bash -c 'usermod -aG docker root'"))
+  system2("docker", c("exec bash -c 'service docker start'"))
+}
+
+
+#' Test tools in rabix
+#'
+#' Test tools locally in rabix/bunny inside docker container
+#'
+#' @param rabix_tool rabix tool from Tool class 
+#' @param inputs input parameters declared as json (or yaml) string
+#' @export test_tool
+#' @return bunny stdout
+#' @examples
+#' \dontrun{
+#' inputs <- '{"counts_file": {"class": "File", "path": "./FPKM.txt"}, "gene_names": "BRCA1"}'
+#' test_tool(bunny, write(rbx$toJSON, file="/data_dir/tool.json"), write(inputs, file="/data_dir/inputs.json"))
+#' }
+
+test_tool = function(rabix_tool, inputs){
+  check_cmd <- "ps --filter status=running --filter name=bunny --format '{{.Names}}: running for {{.RunningFor}}'"
+  container <- system2("docker", c(check_cmd), stdout = TRUE, stderr = TRUE) 
+  if (identical(container, character(0))){
+      message("Test container not running. Try setting testing env first (set_test_env())")
+  } else {
+      message("Trying the execution...")
+      check_cmd <- "inspect --format '{{(index .Mounts 0).Source}}' bunny"
+      mount_point <- system2("docker", c(check_cmd), stderr = TRUE, stdout = TRUE)
+      tool_path <- paste(mount_point, "/tool.json", sep="")
+      inputs_path <- paste(mount_point, "/inputs.json", sep="")
+      write(rabix_tool$toJSON(pretty=TRUE), file=tool_path)
+      write(toJSON(inputs, pretty=TRUE), file=inputs_path)
+      
+      #TODO add simple call to pull images if don't exist on `docker images`
+      run_cmd <- "exec bunny bash -c 'cd /opt/bunny && ./rabix.sh -e /bunny_data /bunny_data/tool.json /bunny_data/inputs.json'"
+      system2("docker", run_cmd)
+  }
 }
 
