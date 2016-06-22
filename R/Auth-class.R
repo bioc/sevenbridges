@@ -156,6 +156,11 @@ optional parameteres: tags and description, type. '
 
                             if (is.null(name) || is.null(billing_group_id))
                                 stop('name, description, and billing_group_id must be provided')
+                            
+                            ## check tags
+                            if(is.character(tags)){
+                                tags <- as.list(tags)
+                            }
 
                             body = list('name' = name,
                                 'type' = type, 
@@ -476,8 +481,8 @@ if id provided, This call retrieves information about a selected invoice, includ
                             if(!is.null(id)){
                                 req <- api(path = paste0("apps/", .update_revision(id, revision)),
                                            method = "GET", query = query, ...)
-                                
-                                return(.asApp(req))
+                           
+                                return(setAuth(.asApp(req), .self, "App"))
                             }
 
 
@@ -655,6 +660,21 @@ if id provided, This call retrieves information about a selected invoice, includ
                         },
                         unmount = function(...){
                             fs$unmount(...)
+                        },
+                        get_id_from_path = function(p){
+                            ids <- a$api(path = 'action/files/get_ids', 
+                                         method = "POST", 
+                                         body = as.list(p))
+                            idx <- unlist(lapply(ids, is.null))
+                            if(sum(idx)){
+                                message("no id for following file: \n", paste(df.path[idx], collapse = "\n"))
+                            }
+                            if(sum(!idx)){
+                                id.valid <- unlist(ids[!idx])
+                            }else{
+                                id.valid <- NULL
+                            }
+                            id.valid
                         }
                     ))
 

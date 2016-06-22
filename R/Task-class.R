@@ -1,7 +1,7 @@
 .ts <- c("id", "name", "description", "status", "app", "type",
          "created_by", "executed_by", "start_time", "end_time", 
          "execution_status", "price", "inputs", "outputs", "project",
-         "batch", "batch_input", "batch_by",  "parent", "batch_group")
+         "batch", "batch_input", "batch_by",  "parent", "batch_group", "errors")
 
 
 
@@ -25,7 +25,8 @@ Task <- setRefClass("Task", contains = "Item",
                         batch_input = "characterORNULL",
                         batch_by = "listORNULL",
                         parent = "characterORNULL",
-                        batch_group = "listORNULL"
+                        batch_group = "listORNULL",
+                        errors = "listORNULL"
                        
                         ),
                     methods = list(
@@ -311,9 +312,6 @@ setMethod("asTaskInput", "ANY", function(object){
     object
 })
 
-# setMethod("asTaskInput", "ANY", function(object){
-#     return(as.list(object))
-# })
 
 
 #' batch function for task batch execution
@@ -357,7 +355,9 @@ batch = function(input = NULL,
         type = "CRITERIA"
     }
     
-   
+   if(length(criteria) == 1){
+       criteria = list(criteria)
+   }
     switch(type, 
            ITEM = {
                res = list(type = "ITEM")
@@ -374,6 +374,5 @@ batch = function(input = NULL,
            })
     c(list(batch_input = input), list(batch_by = res))
 }
-
 
 

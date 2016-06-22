@@ -307,21 +307,27 @@ Project <- setRefClass("Project", contains = "Item",
                                        }
                                        lst <- lapply(steplst, function(x){
                                            if(!isSBGApp(x$run)){
+                                               ## if not exists on sbg platform, need to 
+                                               ## add it first
                                                .name <- gsub("#", "",x$run$id)
                                                message(.name)
                                                new.app <- app_add(short_name = .name,
                                                                   filename = x$run)
                                                new.app
                                            }else{
+                                               ## SBG id doesn't need to add
+                                               ## but need to copy?
                                                x
                                            }
                                        })
-                                       slst <- lst[[1]]
-                                       for(i in 1:(length(lst) -1)){
-                                           slst <- slst + lst[[i + 1]]
-                                       }
-                                       ## udpate steplist
-                                      filename$steps <- slst
+                                       ## No need to do this here, should not edit 
+                                       ## should assume link exists.
+                                      #  slst <- lst[[1]]
+                                      #  for(i in 1:(length(lst) -1)){
+                                      #      slst <- slst + lst[[i + 1]]
+                                      #  }
+                                      #  ## udpate steplist
+                                      # filename$steps <- slst
                                    }
 
 
@@ -381,9 +387,18 @@ Project <- setRefClass("Project", contains = "Item",
                                description = NULL,
                                batch = NULL,
                                app = NULL,
-                               inputs = NULL, ...){
+                               inputs = NULL, 
+                               input_check = getOption("sevenbridges")$input_check, ...){
 
-                               
+                              
+                            if(input_check){
+                                message("checking inputs ...")
+                                message("API: getting app input information ...")
+                                apps = auth$app(id = app)
+                                message("checking ...")
+                                inputs = apps$input_check(inputs)
+                            }
+                            message("Task drafting ...")
                             body = list(name = name,
                                 description = description,
                                 project = id,
@@ -398,6 +413,10 @@ Project <- setRefClass("Project", contains = "Item",
                             
                             res <- auth$api(path = "tasks", body = body, method = "POST", ...)
                             res <- .asTask(res)
+                            if(length(res$errors)){
+                                message("Errors found: please fix it in your script or in the UI")
+                                .showList(res$errors)
+                            }
                             setAuth(res, .self$auth, "Task")
                                
                            },
