@@ -293,28 +293,32 @@ m.match <- function(obj, id = NULL, name = NULL,
     }
 }
 
+message2 = function(...){
+    cat(paste0(..., "\n"))
+}
 
-.showFields <- function(x, title = NULL, values = NULL, full = FALSE){
+.showFields <- function(x, title = NULL, values = NULL, 
+                        full = FALSE, con.char = " / "){
     if (missing(values)){
         flds = names(x$getRefClass()$fields())
     }else{
         flds = values
     }
-
+    
     if(!length(x))
         return(NULL)
-
+    
     if(!full){
         idx <- sapply(flds, is.null)
         if(!is.null(title) && !all(idx)){
-            message(title)
+            message2(title)
         }
-
+        
         ## ugly, change later
         for (fld in flds[!idx]){
             if(is.list(x[[fld]])){
                 if(length(x[[fld]])){
-                    message(fld, ":")
+                    message2(fld, ":")
                     .showList(x[[fld]], space =  "  ")
                 }
             }else if(is(x[[fld]], "Item")){
@@ -322,29 +326,29 @@ m.match <- function(obj, id = NULL, name = NULL,
             }else{
                 if(is.character(x[[fld]])){
                     if(x[[fld]] != "" && length(x[[fld]])){
-                        message(fld, " : ", paste0(x[[fld]], collapse = " "))
+                        message2(fld, " : ", paste0(x[[fld]], collapse = con.char))
                     }
                 }else{
                     if(!is.null(x[[fld]]) && length(x[[fld]]))
-                        message(fld, " : ", x[[fld]])                                                           
+                        message2(fld, " : ", x[[fld]])                                                           
                 }
             }
         }
-
+        
     }else{
-        message(title)
+        message2(title)
         ## ugly, change later
         for (fld in flds){
             if(is.list(x[[fld]])){
-                message(fld, ":")                
+                message2(fld, ":")                
                 .showList(x[[fld]], space =  "  ", full = full)
             }else if(is(x[[fld]], "Item")){
                 x[[fld]]$show()
             }else{
                 if(is.character(x[[fld]])){
-                        message(fld, " : ", paste0(x[[fld]], collapse = " "))                                        
+                    message2(fld, " : ", paste0(x[[fld]], collapse = con.char))                                        
                 }else{
-                        message(fld, " : ", x[[fld]])                                                           
+                    message2(fld, " : ", x[[fld]])                                                           
                 }
             }
         }
@@ -352,12 +356,15 @@ m.match <- function(obj, id = NULL, name = NULL,
     }
 }
 
+
 ## full = TRUE, show empty filed as well
 .showList <- function(x, space = "", full = FALSE){
     if(length(x)){
         if(all(sapply(x, is.list))){
             sapply(x, .showList, space = paste0(space, ""))
+            return(invisible())
         }
+        
         if(!full){
             idx <- sapply(x, function(s){
                 if(is.character(s)){
@@ -367,30 +374,56 @@ m.match <- function(obj, id = NULL, name = NULL,
                 }
                 !is.null(s) && idx
             })
-            x <- x[idx]
+            x <- x[which(idx)]
         }
-
-        for (fld in names(x)){
-            if(all(is.character(x[[fld]]))){
-                msg <- paste0(x[[fld]], collapse = " \n ")
-                message(space, fld, " : ", msg)                                
-            }else{
-                if(is(x[[fld]], "Meta")){
-                    msg <- as.character(x[[fld]]$data)
-                    message(space, fld, " : ", msg) 
-                }else if(is.list(x[[fld]])){
-                    message(space, fld, " : ", length(x[[fld]]), " items")
-                    .showList(x[[fld]], space = paste0(space, "  "))
+        
+        for (i in seq_len(length(x))){
+            fld <- names(x[i])
+            if(all(is.character(x[[i]]))){
+                msg <- paste0(x[[i]], collapse = " \n ")
+                if(is.null(fld)){
+                    message2(space, " - ",  msg)  
                 }else{
-                    msg <- as.character(x[[fld]])
-                    message(space, fld, " : ", msg) 
+                    message2(space, fld, " : ", msg)  
                 }
-                             
+                
+            }else{
+                
+                if(is(x[[i]], "Meta")){
+                    msg <- as.character(x[[i]]$data)
+                    if(is.null(fld)){
+                        message2(space, " - ",  msg)  
+                    }else{
+                        message2(space, fld, " : ", msg)  
+                    }
+                    
+                }else if(is.list(x[[i]])){
+                    if(is.null(fld)){
+                        message2(space, " - ", length(x[[i]]), " items")
+                        
+                    }else{
+                        message2(space, fld, " : ", length(x[[i]]), " items")
+                        
+                    }
+                    
+                    
+                    .showList(x[[i]], space = paste0(space, "  "))
+                }else{
+                    msg <- as.character(x[[i]])
+                    if(is.null(fld)){
+                        message2(space, " - ",  msg)  
+                    }else{
+                        message2(space, fld, " : ", msg)  
+                    }
+                }
+                
             }
         }
+        
+        
+        
     }
 }
-
 
 .update_list <- function(o, n){
     o.nm <- names(o)
@@ -670,277 +703,218 @@ iterId <- function(ids, fun, ...){
 }
 
 
-#' lift a docopt string
-#'
-#' lift a docopt string used for command line
-#'
-#' parse Rmarkdown header from rabix field
-#'
-#' @param input input Rmarkdown file or a function name (character)
-#' @aliases lift_docopt
-#' @return a string used for docopt
-#' @examples
-#' \dontrun{
-#' fl = system.file("examples/runif.Rmd", package = "liftr")
-#' opts = lift_docopt(fl)
-#' require(docopt)
-#' docopt(opts)
-#' docopt(lift_docopt("mean.default"))
-#' }
-lift_docopt = function(input){
-
-  if(file.exists(input)){
-    res = lift_docopt_from_header(input)
-  }else{
-    message("file doesn't exist, try to try this as a function")
-    res = lift_docopt_from_function(input)
-  }
-  res
-}
-
-
-lift_docopt_from_header = function(input){
-  opt_all_list = parse_rmd(input)
-  ol <- opt_all_list$rabix
-  .in <- ol$inputs
-  txt <- paste("usage:", ol$baseCommand, "[options]")
-  txt <- c(txt, "options:")
-
-  ol <- lapply(.in, function(x){
-    .nm <- x$prefix
-    .t <- x$type
-    .type <- paste0('<', deType(.t), '>')
-    .o <- paste(.nm, .type, sep = "=")
-    .des <- x$description
-    .default <- x$default
-    if(!is.null(.default)){
-      .des <- paste0(.des, " [default: ", .default, "]")
-    }
-    list(name = .o, description = .des)
-  })
-  for(i in 1:length(ol)){
-    txt <- c(txt, paste(" ", ol[[i]]$name, ol[[i]]$description))
-  }
-  paste(txt, collapse = "\n")
-}
-
-lift_docopt_from_function = function(input){
-
-  ol = opt_all_list = rdarg(input)
-
-  txt <- paste0("usage: ", input, ".R",  " [options]")
-
-
-  nms <- names(ol)
-  lst <- NULL
-
-  for(nm in nms){
-    .nm = paste0("--", nm)
-    .t = guess_type(nm, input)
-    .type = paste0('<', deType(.t), '>')
-    .o = paste(.nm, .type, sep = "=")
-    .des = ol[[nm]]
-    .def  = guess_default(nm, input)
-    if(!is.null(.def)){
-      .des <- paste0(.des, " [default: ", .def, "]")
-    }
-    lst = c(lst, list(list(name = .o, description = .des)))
-  }
-
-  for(i in 1:length(lst)){
-    txt <- c(txt, paste(" ", lst[[i]]$name, lst[[i]]$description))
-  }
-  ## Fixme:
-  paste(txt, collapse = "\n")
-}
-
-
-lift_cmd = function(input, output_dir = NULL, shebang = "#!/usr/local/bin/Rscript",
-                    docker_root = "/"){
-
-  if(file.exists(input)){
-    opt_all_list = parse_rmd(input)
-    if (is.null(output_dir))
-      output_dir = dirname(normalizePath(input))
-
-    tmp = file.path(output_dir, opt_all_list$rabix$baseCommand)
-    message("command line file: ", tmp)
-    con = file(tmp)
-    txt = lift_docopt(input)
-    txt = c(shebang, "'", paste0(txt, " ' -> doc"))
-    paste("library(docopt)\n opts <- docopt(doc) \n
-        rmarkdown::render('",
-          docker_root, basename(input), "', BiocStyle::html_document(toc = TRUE),
-        output_dir = '.', params = lst)
-    " )-> .final
-    txt <- c(txt, .final)
-    writeLines(txt, con = con)
-    close(con)
-  }else{
-    message("consider you passed a function name (character)")
-    if (is.null(output_dir))
-      output_dir = getwd()
-    .baseCommand <- paste0(input, ".R")
-    tmp = file.path(output_dir, .baseCommand)
-    message("command line file: ", tmp)
-    con = file(tmp)
-    txt = lift_docopt(input)
-    txt = c(shebang, "'", paste0(txt, " ' -> doc"))
-    txt = c(txt, "library(docopt)\n opts <- docopt(doc)")
-    .final = gen_list(input)
-    txt <- c(txt, .final)
-    writeLines(txt, con = con)
-    close(con)
-  }
-  Sys.chmod(tmp)
-  tmp
-}
-
-con_fun = function(type){
-  res = switch(deType(type),
-          int = "as.integer",
-          float = "as.numeric",
-          boolean = "as.logical",
-          NULL)
-  res
-}
-
-
-gen_list = function(fun){
-  lst = rdarg(fun)
-  lst = lst[names(lst) != "..."]
-  nms = names(lst)
-  txt = NULL
-  for(nm in nms){
-    .t = con_fun(guess_type(nm, fun))
-    if(!is.null(.t)){
-      txt = c(txt, paste0(nm, " = ", .t, "(", "opts$", nm, ")"))
-    }else{
-      txt = c(txt, paste0(nm, " = ", "opts$", nm))
-    }
-
-  }
-  txt = paste("list(", paste(txt, collapse = ","), ")")
-  paste("do.call(", fun, ",", txt, ")")
-
-}
-
-
-guess_type = function(nm, fun){
-  dl = formals(fun)
-  if(!is.null(dl[[nm]])){
-    .c <- class(dl[[nm]])
-    if(.c == "name"){
-      return("string")
-    }else{
-      return(deType(.c))
-    }
-
-  }else{
-    return("string")
-  }
-}
-
-guess_default = function(nm, fun){
-  dl = formals(fun)
-  if(!is.null(dl[[nm]])){
-    .c <- class(dl[[nm]])
-    if(.c == "name"){
-      return(NULL)
-    }else{
-      return(dl[[nm]])
-    }
-
-  }else{
-    return(NULL)
-  }
-}
-
-parse_rmd = function(input){
-    # locate YAML metadata block
-    doc_content = readLines(normalizePath(input))
-    header_pos = which(doc_content == '---')
-    
-    # handling YAML blocks ending with three dots
-    if (length(header_pos) == 1L) {
-        header_dot_pos = which(doc_content == '...')
-        if (length(header_dot_pos) == 0L) {
-            stop('Cannot correctly locate YAML metadata block.
-                 Please use three hyphens (---) as start line & end line,
-                 or three hyphens (---) as start line with three dots (...)
-                 as end line.')
-        } else {
-            header_pos[2L] = header_dot_pos[1L]
-        }
-    }
-    
-    doc_yaml = paste(doc_content[(header_pos[1L] + 1L):
-                                     (header_pos[2L] - 1L)],
-                     collapse = '\n')
-    yaml.load(doc_yaml)
-    }
-
 
 #' Set testing env
 #'
-#' Check if docker is installed, is running and has required images downloaded and if do creates container 
+#' Checks if docker is installed, is running and has required images downloaded and if do creates container 
 #'
+#' @param type "dind" or "host"
 #' @param docker_image required docker image with pre-installed bunny, default: tengfei/testenv
-#' @param data_dir direcotry with data which is mounted with container creation
+#' @param data_dir directory with data to mount (also will be execution directory)
 #' @export set_test_env
 #' @return docker stdout
 #' @examples
 #' \dontrun{
-#' set_test_env("tengfei/testenv")
+#' set_test_env("dind", "tengfei/testenv", "/Users/<user>/tools")
 #' }
 
-set_test_env = function(docker_image, data_dir){
-  docker_machine_args <- "ls --filter state=Running --format '{{.Name}}'"
-  docker.vm <- system2("docker-machine", c(docker_machine_args), stdout=TRUE, stderr=TRUE)
-  envs <- substring(system2("docker-machine", c("env", docker.vm), stdout=TRUE, stderr=TRUE)[1:4], 8)
-  envs <- gsub("\"", "", unlist(strsplit(envs, "="))[c(FALSE,TRUE)])
-  Sys.setenv(DOCKER_TLS_VERIFY = envs[1], DOCKER_HOST = envs[2], DOCKER_CERT_PATH = envs[3], DOCKER_MACHINE_NAME = envs[4])
-  
-  docker_run_args <- paste("run --privileged --name bunny -v ", data_dir, ":/bunny_data -dit ", docker_image, sep="")
-  system2("docker", c(docker_run_args), stdout=TRUE, stderr=TRUE)
-  
-  #TODO some problems with docker inside docker (could be set from Dockerfile maybe)
-  system2("docker", c("exec bash -c 'usermod -aG docker root'"))
-  system2("docker", c("exec bash -c 'service docker start'"))
+set_test_env = function(type, docker_image, data_dir){
+    stopifnot(type %in% c("dind", "host"))
+    
+    switch(Sys.info()[['sysname']],
+           Windows= {
+               message("[INFO]: Windows OS detected: trying docker-machine ...")
+               .docker_env_vars()
+           },
+           Linux  = {
+               message("[INFO]: Linux OS detected: ensure docker server and client are connected")
+           },
+           Darwin = {
+               message("[INFO]: OS X detected: trying docker-machine ...")
+               .docker_env_vars()
+           }
+    )
+    
+    # cleanup
+    system2("docker", c("rm -f bunny"), stdout=TRUE, stderr=TRUE)
+    #system2("docker", "rm $(docker ps -aq -f status=exited -f status=created)", stdout = T, stderr = T)
+    system2("docker", "volume rm $(docker volume ls -qf dangling=true)", stdout=TRUE, stderr=TRUE)
+    
+    # start container as docker-in-docker (dind) or docker-beside-docker (host)
+    if (type == "dind"){
+        docker_run_args <- paste("run --privileged --name bunny -v ", data_dir, ":/bunny_data -dit ", docker_image, sep="")
+        system2("docker", c(docker_run_args), stdout=TRUE, stderr=TRUE)
+        system2("docker", c("exec bunny bash -c 'service docker start'"), stdout=TRUE, stderr=TRUE)
+        system2("docker", c("inspect --format '{{.Id}}' bunny"), stdout = TRUE, stderr = TRUE)
+    } else {
+        docker_run_args <- paste("run --privileged --name bunny -v /var/run/docker.sock:/var/run/docker.sock -v ", data_dir, ":/bunny_data -dit ", docker_image, sep="")
+        system2("docker", c(docker_run_args), stdout=TRUE, stderr=TRUE)
+    }
+}
+
+.docker_env_vars = function(){    
+    #TODO: This flow should really be handled by separate class or R docker client package (non-existant)
+    docker_machine_args <- "ls --filter state=Running --format '{{ .Name }}'"
+    docker.vm <- system2("docker-machine", c(docker_machine_args), stdout=TRUE, stderr=TRUE)
+    if (identical(docker.vm, character(0))){
+        message("[ERROR]: docker-machine not running.")
+    }
+    envs <- substring(system2("docker-machine", c("env", docker.vm), stdout=TRUE, stderr=TRUE)[1:4], 8)
+    envs <- gsub("\"", "", unlist(strsplit(envs, "="))[c(FALSE,TRUE)])
+    Sys.setenv(DOCKER_TLS_VERIFY = envs[1], DOCKER_HOST = envs[2], DOCKER_CERT_PATH = envs[3], DOCKER_MACHINE_NAME = envs[4])
 }
 
 
-#' Test tools in rabix
+#' Test tools in rabix/bunny
 #'
 #' Test tools locally in rabix/bunny inside docker container
 #'
 #' @param rabix_tool rabix tool from Tool class 
 #' @param inputs input parameters declared as json (or yaml) string
-#' @export test_tool
+#' @export test_tool_bunny
 #' @return bunny stdout
 #' @examples
 #' \dontrun{
 #' inputs <- '{"counts_file": {"class": "File", "path": "./FPKM.txt"}, "gene_names": "BRCA1"}'
-#' test_tool(bunny, write(rbx$toJSON, file="/data_dir/tool.json"), write(inputs, file="/data_dir/inputs.json"))
+#' rbx <- <define rabix tool>
+#' set_test_env("tengfei/testenv", "<mount_dir>")
+#' test_tool_bunny(rbx, inputs)
 #' }
 
-test_tool = function(rabix_tool, inputs){
-  check_cmd <- "ps --filter status=running --filter name=bunny --format '{{.Names}}: running for {{.RunningFor}}'"
-  container <- system2("docker", c(check_cmd), stdout = TRUE, stderr = TRUE) 
-  if (identical(container, character(0))){
-      message("Test container not running. Try setting testing env first (set_test_env())")
-  } else {
-      message("Trying the execution...")
-      check_cmd <- "inspect --format '{{(index .Mounts 0).Source}}' bunny"
-      mount_point <- system2("docker", c(check_cmd), stderr = TRUE, stdout = TRUE)
-      tool_path <- paste(mount_point, "/tool.json", sep="")
-      inputs_path <- paste(mount_point, "/inputs.json", sep="")
-      write(rabix_tool$toJSON(pretty=TRUE), file=tool_path)
-      write(toJSON(inputs, pretty=TRUE), file=inputs_path)
-      
-      #TODO add simple call to pull images if don't exist on `docker images`
-      run_cmd <- "exec bunny bash -c 'cd /opt/bunny && ./rabix.sh -e /bunny_data /bunny_data/tool.json /bunny_data/inputs.json'"
-      system2("docker", run_cmd)
-  }
+test_tool_bunny = function(rabix_tool, inputs){
+    check_cmd <- "ps --filter status=running --filter name=bunny --format '{{.Names}}: running for {{.RunningFor}}'"
+    container <- system2("docker", c(check_cmd), stdout = TRUE, stderr = TRUE) 
+    if (identical(container, character(0))){
+        message("Test container not running. Try setting testing env first (set_test_env())")
+    } else {
+        message("Trying the execution...")
+        check_cmd <- "inspect --format '{{ range .Mounts }}{{ if eq .Destination \"/bunny_data\" }}{{ .Source }}{{ end }}{{ end }}' bunny"
+        mount_point <- system2("docker", c(check_cmd), stderr = TRUE, stdout = TRUE)
+        
+        tool_path <- paste0(mount_point, "/tool.json")
+        inputs_path <- paste0(mount_point, "/inputs.json")
+        stdout_path <- paste0(mount_point, "/stdout.log")
+        stderr_path <- paste0(mount_point, "/stderr.log")
+        
+        # cleanup
+        if (file.exists(tool_path)){
+            system2("docker", "exec bunny bash -c 'rm /bunny_data/tool.json'")
+        } 
+        if (file.exists(inputs_path)){
+            system2("docker", "exec bunny bash -c 'rm /bunny_data/inputs.json'")
+        }
+        
+        write(rabix_tool$toJSON(pretty=TRUE), file=tool_path)
+        write(toJSON(inputs, pretty=TRUE, auto_unbox=TRUE), file=inputs_path)
+        
+        run_cmd <- "exec bunny bash -c 'cd /opt/bunny && ./rabix.sh -b /bunny_data /bunny_data/tool.json /bunny_data/inputs.json'"
+        system2("docker", run_cmd, stdout = stdout_path, stderr = stderr_path)
+        cat( readLines( stdout_path ) , sep = "\n" )
+    }
+}
+
+#' Test tools in rabix/rabix-devel (DEPRECATED)
+#'
+#' Test tools locally in rabix/rabix-devel python executor (DEPRECATED)
+#'
+#' @param rabix_tool rabix tool from Tool class 
+#' @param inputs input parameters declared as json (or yaml) string
+#' @export test_tool_rabix
+#' @return rabix stdout
+#' @examples
+#' \dontrun{
+#' inputs <- '{"counts_file": {"class": "File", "path": "./FPKM.txt"}, "gene_names": "BRCA1"}'
+#' rbx <- <define rabix tool>
+#' set_test_env("tengfei/testenv", "<mount_dir>")
+#' test_tool_rabix(rbx, inputs)
+#' }
+test_tool_rabix = function(rabix_tool, inputs=list()){
+    check_cmd <- "ps --filter status=running --filter name=bunny --format '{{.Names}}: running for {{.RunningFor}}'"
+    container <- system2("docker", c(check_cmd), stdout = TRUE, stderr = TRUE) 
+    if (identical(container, character(0))){
+        message("Test container not running. Try setting testing env first (set_test_env())")
+    } else {
+        message("Trying the execution...")
+        check_cmd <- "inspect --format '{{ range .Mounts }}{{ if eq .Destination \"/bunny_data\" }}{{ .Source }}{{ end }}{{ end }}' bunny"
+        mount_point <- system2("docker", c(check_cmd), stderr = TRUE, stdout = TRUE)
+        
+        tool_path <- paste0(mount_point, "/tool.json")
+        inputs_path <- paste0(mount_point, "/inputs.json")
+        stdout_path <- paste0(mount_point, "/stdout.log")
+        stderr_path <- paste0(mount_point, "/stderr.log")
+        
+        # cleanup
+        if (file.exists(tool_path)){
+            system2("docker", "exec bunny bash -c 'rm /bunny_data/tool.json'")
+        } 
+        if (file.exists(inputs_path)){
+            system2("docker", "exec bunny bash -c 'rm /bunny_data/inputs.json'")
+        }
+        
+        write(rabix_tool$toJSON(pretty=TRUE), file=tool_path)
+        write(toJSON(inputs, pretty=TRUE, auto_unbox=TRUE), file=inputs_path)
+        out_dir <- paste0(format(Sys.time(), "%H%M%s-%d%m%Y-"), "rabix")
+        out_dir_abs <- paste("/bunny_data", out_dir, sep = "/")
+        run_cmd <- "exec bunny bash -c 'cd /bunny_data && rabix -v -v -v /bunny_data/tool.json -i /bunny_data/inputs.json'"
+        system2("docker", run_cmd, stdout = stdout_path, stderr = stderr_path)
+        cat( readLines( stdout_path ) , sep = "\n" )
+    }
+}
+
+#' Test tools with cwl-runner
+#'
+#' Test tools locally cwl-runner (https://github.com/common-workflow-language/cwltool)
+#'
+#' @param rabix_tool rabix tool from Tool class 
+#' @param inputs input parameters declared as json (or yaml) string
+#' @export test_tool_cwlrun
+#' @return cwl-runner stdout
+#' @examples
+#' \dontrun{
+#' inputs <- '{"counts_file": {"class": "File", "path": "./FPKM.txt"}, "gene_names": "BRCA1"}'
+#' rbx <- <define rabix tool>
+#' set_test_env("tengfei/testenv", "<mount_dir>")
+#' test_tool_cwlrun(rbx, inputs)
+#' }
+test_tool_cwlrun = function(rabix_tool, inputs=list()){
+    check_cmd <- "ps --filter status=running --filter name=bunny --format '{{.Names}}: running for {{.RunningFor}}'"
+    container <- system2("docker", c(check_cmd), stdout = TRUE, stderr = TRUE) 
+    if (identical(container, character(0))){
+        message("Test container not running. Try setting testing env first (set_test_env())")
+    } else {
+        message("Trying the execution...")
+        check_cmd <- "inspect --format '{{ range .Mounts }}{{ if eq .Destination \"/bunny_data\" }}{{ .Source }}{{ end }}{{ end }}' bunny"
+        mount_point <- system2("docker", c(check_cmd), stderr = TRUE, stdout = TRUE)
+        
+        tool_path <- paste0(mount_point, "/tool.json")
+        inputs_path <- paste0(mount_point, "/inputs.json")
+        stdout_path <- paste0(mount_point, "/stdout.log")
+        stderr_path <- paste0(mount_point, "/stderr.log")
+        
+        # cleanup
+        if (file.exists(tool_path)){
+            system2("docker", "exec bunny bash -c 'rm /bunny_data/tool.json'")
+        } 
+        if (file.exists(inputs_path)){
+            system2("docker", "exec bunny bash -c 'rm /bunny_data/inputs.json'")
+        }
+        
+        write(rabix_tool$toJSON(pretty=TRUE), file=tool_path)
+        write(toJSON(inputs, pretty=TRUE, auto_unbox=TRUE), file=inputs_path)
+        out_dir <- paste0(format(Sys.time(), "%H%M%s-%d%m%Y-"), "cwlrunner")
+        out_dir_abs <- paste("/bunny_data", out_dir, sep = "/")
+        run_cmd <- c("exec bunny bash -c 'mkdir ", out_dir_abs, 
+                     " && cd ", out_dir_abs, 
+                     " && cwl-runner --non-strict --tmpdir-prefix . --tmp-outdir-prefix . /bunny_data/tool.json /bunny_data/inputs.json'")
+        system2("docker", run_cmd, stdout = stdout_path, stderr = stderr_path)
+        cat( readLines( stdout_path ) , sep = "\n" )
+    }
+}
+
+
+set_box <- function(x){
+    .c <- class(x)
+    class(x) <- c(.c, "box")
+    x
 }
 
