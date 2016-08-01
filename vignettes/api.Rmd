@@ -24,7 +24,7 @@ knitr::opts_chunk$set(eval = FALSE)
 ## Introduction
 
 This package is designed to support as many Seven Bridges supported platforms 
-as possible, including the NCI Cancer Genomic Cloud Pilot developed by Seven Bridges, as long as you provide the correct API URL, it should work normally. 
+as possible, including the NCI Cancer Genomic Cloud Pilot developed by Seven Bridges, make sure you provide the correct API URL for the platform you are using.
 
 Currently tested platform including
 
@@ -33,103 +33,82 @@ Currently tested platform including
 - [Seven Bridges US platform on Google Cloud](https://gcp.sbgenomics.com/)
 
 
-It will be helpful to read complete platform documentation 
+To read complete platform documentation 
 
 - [Full doc for Cancer Genomics Cloud Platform](http://docs.cancergenomicscloud.org/docs)
 - [Full doc for Seven Bridges US platform](https://docs.sbgenomics.com/display/developerhub/Seven+Bridges+Genomics+Developer+Hub)
 
-And it's API part if you want to understand details and use its full power:
+Full API documentation on the platform
 
 - [API doc for Cancer Genomics Cloud Platform](http://docs.cancergenomicscloud.org/docs/the-cgc-api)
 - [API doc for Seven Bridges US platform](https://docs.sbgenomics.com/display/developerhub/API)
 
-### API URL
+### API R client
 
-Most commonly used API url, choose the correct one depends on which platforms you are using
-
-
-- __Seven Bridges US platform on AWS__ 
-    1. V2 (new):  https://api.sbgenomics.com/v2/
-    2. V1: https://api.sbgenomics.com/1.1/
-- __Seven Bridges US platform on Google Cloud__ :  https://gcp-api.sbgenomics.com/v2/
-- __Cancer Genomics Cloud Platform__ : https://cgc-api.sbgenomics.com/v2/
-
-### API V1
-
-The difference of V1 and V2 is that, V2 project is CWL(common workflow language) compatible, on NCI
-cancer genomics cloud, google cloud, or any newer platforms, you should not have such a problem. But
-for Seven Bridges Platofrm, currently users are able to create old project (V1) and new developer project (v2). For this group
-of users, please note, `sevenbridges` package doesn't support old API at higher level, alterntatively
-there are two ways if you are still using the old project type
-
-- Use old `sbgr` package `sbgr` package will be under maintenance mode. 
-- You can still use our lower api function as shown in following section, but higher level API 
-calls like the chained action are not supported for v1. 
-
-For advanced users, you can still use our lower API call for all V1 APIs like this, the most used 
-arguments are "path", "query", "body", you can also check the function `api`. 
-
-```{r}
-library(sevenbridges)
-a <- Auth(token = "8c3329a4de664c35bb657499bb2f335c", url = "https://api.sbgenomics.com/1.1/")
-## Get projects: GET /1.1/project
-a$api(path = "project")
-## higher level doesn't work for v1
-## a$project() won't work
-```
-
-Principle: I will recommend all users switch to new project type if possible, 
-it will have more features and much better support from this package. 
-
-
-### API V2 and beyond
-
-Current public v2 API
+Current public V2 API is CWL compatable, public API url: 
 
 - __NCI Cancer Genomics Cloud__ : https://cgc-api.sbgenomics.com/v2/
 - __Seven Bridges on AWS__: https://api.sbgenomics.com/v2/
 - __Seven Bridges on Google__: https://gcp-api.sbgenomics.com/v2/
 
 
-`sevenbbridges` package only support V2 and later API, which support CWL compatible project. 
+`sevenbbridges` package only support V2 and later API, which support CWL compatible project. It provides simple interface for easy access and friendly 
+showing methos. You will learn them through the tutorials. 
+
+
+__For advanced users__, you can directly use `httr` package to construct your API calls, or you can still use low level API call for all APIs like this, the most used arguments are "path", "query", "body".
+
+For example, when you read API documentatio you will see a section called "list all your projects", it tells you to use method "get" and path "/projects", so you can simply call
+
+```{r}
+library(sevenbridges)
+a <- Auth(token = "8c3329a4de664c35bb657499bb2f335c", 
+          url = "https://api.sbgenomics.com/v2/")
+a$api(path = "project", method = "GET")
+```
+
+you can also pass query and body as a list. 
+
+With this package, you can simply call
+
+```{r}
+a$project()
+```
+
+### API principles 
+
+Before we continue, there are couple things you may want to keep it in mind
+
+- Every API call accept arguments called `offset` and `limit`, offset defines where the retrieved items started, and limit defines quantity of items you want to get, and by default it's always `offset = 0` and `limit = 100`, which means the __first 100 items__. This applies when you want to list items or search items by a name matching. To force the search and list for all items, please use `complete = TRUE` in your call. By default `complete = FALSE` that it always perform those search and list operations for particular offset and limit. 
+- When search by ID, it's unqiue don't worry about offset or limit. So __it's always a good practice__ to get your item by ID and pass as input to your task. To find id, you can either find it on the UI in the url or in the API list items call or defail infomation. 
+- Search by name pattern is not unique, it returned you all matched items, unless you set `exact = TRUE`. 
+
 
 ### Installation
 
-This package is in devel branch on bioconductor now, to install the package.
+`sevenbridges` package is now on Bioconductor released and devel branch. 
 
 ```{r}
-source("http://bioconductor.org/biocLite.R")
-useDevel(devel = TRUE)
+## try http:// if https:// URLs are not supported
+source("https://bioconductor.org/biocLite.R")
 biocLite("sevenbridges")
 ```
 
-If you cannot install it because you are not running latest R, you can install the package from github
+Our API keep improving, please also visit our [github homepage](https://github.com/sbg/sevenbridges-r) for most recent news and for latest version.  
 
 ```{r}
 # install.packages("devtools") if devtools was not installed
-## Install from github for development version  
 source("http://bioconductor.org/biocLite.R")
-# install.packages("devtools") if devtools was not installed
 library(devtools)
 install_github("sbg/sevenbridges-r", build_vignettes=TRUE, 
   repos=BiocInstaller::biocinstallRepos(),
   dependencies=TRUE)
 ```
 
-This package is also available in docker image `tengfei/sevenbridges`, which the latest is build on `bioconductor/devel_base` on dockerhub.
-
-Checkout he _Dockerfile_ at 
-
-```{r}
-system.file("docker", "sevenbridges/Dockerfile", package = "sevenbridges")
-```
-
-
 
 ## Quickstart
 
 For more details about how to use the API client in R, please go for the second section for complete guide. This section, I am going to use a simple example for a quick start.
-
 
 ### Create Auth object
 
@@ -142,10 +121,13 @@ You have three different ways to setup the token.
 new R session.
 3. Tempoerary setup via option in R session
 
+Load the library first
 
+```{r, eval = TRUE}
+library(sevenbridges)
+```
 
 ```{r}
-library(sevenbridges)
 ## direct setup
 a <- Auth(token = "<fake_token>",
           url = "https://cgc-api.sbgenomics.com/v2/")
@@ -315,6 +297,61 @@ p$task(status = "draft")
 tsk$update()
 ```
 
+### More on task inputs requirements
+
+Task inputs need to match the expected data type
+
+- number, character or integer, you can directly pass to input parameters
+- an Enum type, just pass the value to the input parameter
+- File, you have to pay attention to this. Some parameters accept only single file
+as input while other input takes more than one files (File arrays or FilesList). This input require you to pass a `Files` object (for sinlge file input) or `FilesList` object (for input accept more than one files), to make it conventient for you, you can pass a simple `list` of `Files` object as well as the following examples
+
+It's always recommended to get file by id, because it's unique, if you are searching files
+by names, it sometimes return more than one object, make sure it's what you want 
+
+```{r}
+bamfiles.in = p$file(".bam")  ## return more than one files
+## alternatively you can do 
+bam1 = p$file(id = "some_id1")
+bam2 = p$file(id = "some_id2")
+bamfiles.in = list(bam1, bam2)
+
+
+design.in = p$file("sample_table.csv") # matching by name
+gtf.in = p$file("Homo_sapiens.GRCh37.75_subset.gtf") # matching by name
+
+## add a new Task
+tsk = p$task_add(name = "RNA DE report new", 
+                   description = "RNA DE analysis report", 
+                   app = rna.app$id,
+                   inputs = list(bamfiles = bamfiles.in, 
+                                 design = design.in,
+                                 gtffile = gtf.in))
+
+
+```
+
+Note: if you have two files named "a.bam" and "a2.bam", if you are calling `p$file("a")` 
+this will return you two object you can use id which is more accurate or you can  call
+
+```{r}
+p$file("a$")
+## or
+p$file("a", exact = TRUE)
+```
+
+To check your inputs name and types you need to get an `App` object first, then you 
+get raw cwl information and list them by calling `input_type`. Type `File` means single File only, type `File...` means accept more than one file. We are trying to be smart on 
+this, when a parameter accept single file only, if you passed a list, but it has only has one item, we will do the conversion automatically for you; If it require a list, but you pass a single object, it will automatically wrap it into a list. If the 'smart' conversion fails, you may get task warning to ask you fix your input. 
+
+```{r}
+x = a$app(id = "your_app_id")
+x$cwl() # to get raw info first by api
+x$input_type() # return input name and types, pay attention to File and Files...
+```
+
+### Run a task
+
 Now you have your draft task, you can delete your draft task or update it.
 
 ```{r}
@@ -322,8 +359,7 @@ Now you have your draft task, you can delete your draft task or update it.
 ## tsk$delete()
 ```
 
-looks like there is only a single number, oops, I want 100 numbers instead, so 
-let me update my draft task 
+I want 100 numbers instead, so let me update my draft task 
 
 ```{r}
 tsk$getInputs()
@@ -333,12 +369,15 @@ tsk$update(inputs = list(number = 500, seed = 1))
 tsk$getInputs()
 ```
 
-Or we just want to run it in the cloud!
+we just want to run it in the cloud!
 
 ```{r}
 ## Run your task
 tsk$run()
 ```
+
+### Task monitoring
+
 To monitor the task, you can always call `update` on task object to check the status. 
 
 ```{r}
@@ -368,11 +407,28 @@ To download all files from a completed tasks
 tsk$download("~/Downloads")
 ```
 
-More fun to set task hook, so when it's complete download the files
+More fun to set task hook, `setTaskHook`: connect a function call to the status of a task, when you run tsk$monitor(time = 30) it will check that task every 30 seconds for the task running status by api call for following status, ("queued", "draft", "running", "completed", "aborted", "failed") and it triggered the function call based on returned status and `getTaskHook` return the function call for specific status
+
+By default when you monitor a running task, it's only printing status and exit when 
+it's completed. 
+
+
+```{r, eval = TRUE}
+getTaskHook("completed")
+```
+
+If you want to customize the monitor function, there is a requirements
+
+- Your function must return `TRUE` or `FALSE` in the end. When it's `TRUE` (or non-logical value) it means
+the monitoring will be terminated after status matched and function execution, for example when task is completed. When it's `FALSE` it means the monitoring will continue for next iteration of checking, e.g. when it's "runing", you want to keep tracking. 
+
+To set a new function to monitor the status "completed", when it's completed, 
+download all task output files to local folder. 
 
 ```{r}
 setTaskHook("completed", function(){
     tsk$download("~/Downloads")
+    return(TRUE)
 })
 tsk$monitor()
 ```
@@ -895,14 +951,7 @@ a$file(project = "tengfei/re",
 
 
 
-#### Public files
 
-The only way you can list public files now via API is from `Auth$file()` call, and for now, 
-the project id is "admin/sbg-public-data". This may be updated later. Alternative, just click the file from our GUI, you will see the id in the url link.
-
-```{r}
-a$file(project = "admin/sbg-public-data")
-```
 
 #### Update a file
 
@@ -1269,6 +1318,131 @@ To run task in batch mode, (check `?batch`) for more details, here is an mock ru
                    inputs = list(bamfiles = bamfiles.in, 
                                  design = design.in,
                                  gtffile = gtf.in)))
+```
+
+### Volume 
+
+#### Create a volume
+
+```{r}
+a = Auth(user = "tengfei", platform = "us")
+a$add_volume(name = "tutorial_volume", 
+             type = "s3", 
+             bucket = "tengfei-demo", 
+             prefix = "",
+             access_key_id = "AKIAJQENSIA4DJQNZO3A",
+             secret_access_key = "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", 
+             sse_algorithm = "AES256", 
+             access_mode = "RW")
+```
+
+#### List and search all volume
+
+```{r}
+## list all volume
+a$volume()
+## get unique volume by id
+a$volume(id = "tengfei/tengfei_demo")
+## partial search by name
+a$volume(name = "demo")
+```
+
+#### Get volume detail
+```{r}
+v = a$volume()
+v[[1]]$detail()
+```
+
+
+#### Delete volume
+
+```{r}
+a$volume(id = "tengfei/tengfei_demo")$delete()
+```
+
+#### Import file from volume to project
+
+This call import a file from volume like s3 bucket to your project. 
+
+```{r}
+v = a$volume(id = "tengfei/tutorial_volume")
+res = v$import(location =  "A-RNA-File.bam.bai",
+         project = "tengfei/s3tutorial",
+         name = "new.bam.bai", 
+         overwrite = TRUE)
+
+## get job status update
+## state will be "COMPLETED" when it's finished other wise "PENDING"
+v$get_import_job(res$id)
+v
+
+```
+
+#### Export file from project to volume
+
+__Important__ : 
+
+- The file selected for export must not be a public file or an alias. Aliases are objects stored in your cloud storage bucket which have been made available on the Platform. The volume you are exporting to must be configured for read-write access. To do this, set the access_mode parameter to RW when creating or modifying a volume.
+- If this call is successful, the original project file will become an alias to the newly exported object on the volume. The source file will be deleted from the Platform and, if no more copies of this file exist, it will no longer count towards your total storage price on the Platform.
+
+When test please update your file to a project. 
+
+```{r}
+res = v$export(file = "579fb1c9e4b08370afe7903a", 
+         volume = "tengfei/tutorial_volume",
+         location = "", ## when "" use old name
+         sse_algorithm =  "AES256")
+## get job status update
+## state will be "COMPLETED" when it's finished other wise "PENDING"
+v$get_export_job(res$id)
+v
+```
+
+
+
+### Public Files and Apps
+
+How to get public content for files and apps? So you can get their ids and copy them to your project? In this package, we provide two easy function calls from Authentification object. 
+
+When you search and get what you want, you can use their id to do more operation like copying to a project. 
+
+#### Public files
+
+```{r}
+## list first 100 files 
+a$public_file()
+## list by offset and limit
+a$public_file(offset = 100, limit = 100)
+## simply list everything!
+a$public_file(complete = TRUE)
+## get exact file by id
+a$public_file(id = "5772b6f0507c175267448700")
+## get exact file by name with exact = TRUE
+a$public_file(name = "G20479.HCC1143.2.converted.pe_1_1Mreads.fastq", exact = TRUE)
+## with exact = FALSE by default search by name pattern
+a$public_file(name = "fastq") 
+a$public_file(name = "G20479.HCC1143.2.converted.pe_1_1Mreads.fastq")
+```
+
+Actually the public files are hosted in the project called "admin/sbg-public-data", so of course you can just use `file` api to 
+get files you need. 
+
+
+#### Public apps
+
+For public apps we have the similar API calls. 
+
+```{r}
+## list for 100 apps
+a$public_app()
+## list by offset and limit
+a$public_app(offset = 100, limit = 50)
+## search by id
+a$public_app(id = "admin/sbg-public-data/control-freec-8-1/12")
+## search by name in ALL apps
+a$public_app(name = "STAR", complete = TRUE)
+## search by name with exact match
+a$public_app(name = "Control-FREEC", exact = TRUE, complete = TRUE)
 ```
 
 ### Get Raw Response from httr
