@@ -54,6 +54,7 @@ Files <- setRefClass("Files", contains = c("Item", "File"),
                              created_on <<- created_on
                              modified_on <<- modified_on
                              origin <<- origin
+                             
 
                              callSuper(...)
                          },
@@ -79,6 +80,8 @@ Files <- setRefClass("Files", contains = c("Item", "File"),
                                  ## is directory
                                  if(!is.null(name))
                                      destfile <- file.path(destfile, name)
+                             }else{
+                                 stop("download dir not exists")
                              }
                              download.file(url, destfile, ..., method = method)
                          },
@@ -157,7 +160,7 @@ Files <- setRefClass("Files", contains = c("Item", "File"),
 .asFiles <- function(x){
     Files(id = x$id,
           name = x$name,
-          size = as.integer(x$size),
+          size = as.numeric(x$size),
           metadata = x$metadata,
           project = x$project,
           created_on = x$created_on,
@@ -236,7 +239,9 @@ setGeneric("download", function(obj, ...) standardGeneric("download"))
 #' @rdname download-methods
 #' @aliases download,FilesList-method
 setMethod("download", "FilesList", function(obj, ...){
-    lapply(obj, function(x) x$download(...))
+    for(i in 1:length(obj)){
+        obj[[i]]$download(...)
+    }
 })
 
 #' @rdname download-methods

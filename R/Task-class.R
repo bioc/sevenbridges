@@ -1,7 +1,8 @@
 .ts <- c("id", "name", "description", "status", "app", "type",
          "created_by", "executed_by", "start_time", "end_time", 
          "execution_status", "price", "inputs", "outputs", "project",
-         "batch", "batch_input", "batch_by",  "parent", "batch_group", "errors")
+         "batch", "batch_input", "batch_by",  "parent", "batch_group", 
+         "errors", "warnings")
 
 
 
@@ -26,7 +27,8 @@ Task <- setRefClass("Task", contains = "Item",
                         batch_by = "listORNULL",
                         parent = "characterORNULL",
                         batch_group = "listORNULL",
-                        errors = "listORNULL"
+                        errors = "listORNULL",
+                        warnings = "listORNULL"
                        
                         ),
                     methods = list(
@@ -72,6 +74,9 @@ Task <- setRefClass("Task", contains = "Item",
                             auth$api(path = paste0("tasks/", id, "/inputs"),
                                      method = "GET", ...)
                         },
+                        get_input = function(...){
+                            getInputs(...)
+                        },
                         delete = function(...){
                             auth$api(path = paste0("tasks/", id),
                                      method = "DELETE", ...)
@@ -98,7 +103,7 @@ Task <- setRefClass("Task", contains = "Item",
                                 d <- tolower(update()$status)
                                 .fun <- getTaskHook(d)
                                 res <- .fun(...)
-                                if(res){
+                                if(!is.logical(res) || isTRUE(res)){
                                     break
                                 }
                                 Sys.sleep(time)
@@ -172,13 +177,14 @@ TaskHook <- setRefClass("TaskHook", fields = list(
 
                                 if(is.null(completed)){
                                     completed <<- function(...){
-                                        message("completed")
+                                        cat("\r", "completed")
                                         return(TRUE)
                                     }
                                 }
 
                                 if(is.null(queued)){
                                     queued <<- function(...){
+                                        cat("\r", "queued")
                                         return(FALSE)
                                     }
                                 }
@@ -186,12 +192,14 @@ TaskHook <- setRefClass("TaskHook", fields = list(
                                 if(is.null(draft)){
                                     draft <<- function(....){
                                         ## should not happen in a running task
+                                        message("draft")
                                         return(FALSE)
                                     }
                                 }
 
                                 if(is.null(running)){
                                     running <<- function(...){
+                                        cat("\r", "running ...")
                                         return(FALSE)
                                     }
                                 }
@@ -205,7 +213,7 @@ TaskHook <- setRefClass("TaskHook", fields = list(
 
                                 if(is.null(failed)){
                                     failed <<- function(...){
-                                        message("failed")
+                                        cat("\r", "failed")
                                         return(TRUE)
                                     }
                                 }
@@ -231,15 +239,18 @@ TaskHook <- setRefClass("TaskHook", fields = list(
 #' set task function hoook according to
 #' 
 #' @param status one of ("queued", "draft", "running", "completed", "aborted", "failed")
-#' @param fun function 
+#' @param fun function it must return a TRUE or FALSE in the end of function body, when it's 
+#' TRUE this function will also terminate monitor process, if FALSE, function called, but not going
+#' to terminate task monitoring process.
 #' 
 #' @rdname TaskHook
 #' @return object from setHook and getHook.
 #' @export setTaskHook
 #' @examples
 #' getTaskHook("completed")
-#' setHook("completed", function(){
-#'     message("completed yet ...")
+#' setTaskHook("completed", function(){
+#'     message("completed")
+#'     return(TRUE)
 #' })
 setTaskHook = function(status = c("queued", "draft", "running",
                        "completed", "aborted", "failed"), fun){
