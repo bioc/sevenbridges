@@ -9,9 +9,11 @@
 #'
 #' @name sevenbridges-package
 #' @docType package
-#' @author Nan Xiao <\email{nan.xiao@@sbgenomics.com}>
-#'         Tengfei Yin <\email{tengfei.yin@@sbgenomics.com}>
+#' @author Tengfei Yin <\email{tengfei.yin@@sbgenomics.com}>
+#'         Dusan Randjelovic <\email{dusan.randjelovic@sbgenomics.com}>
+#'         Nan Xiao <\email{nan.xiao@@sbgenomics.com}>
 #' @import httr methods
+#' @importFrom dplyr bind_rows
 #' @importFrom utils modifyList
 #' @importFrom rstudioapi getActiveDocumentContext
 #' @importFrom liftr lift drender

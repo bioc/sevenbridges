@@ -1,4 +1,5 @@
 .response_app <- c("href", "id", "name", "project", "revision")
+## setClassUnion("SBGWorkflowORToolORNULL", c("SBGWorkflow", "Tool", "NULL"))
 ## remove "raw" from default showing methods
 
 #' App class
@@ -14,15 +15,46 @@
 #' @export App
 #' @return App object.
 #' @aliases App
+#' @examples 
+#' \dontrun{
+#' a = Auth(url = "https://api.sbgenomics.com/v2/", 
+#'          token = "fake_token")
+#' ## get a flow
+#' app = a$public_app(id = "admin/sbg-public-data/rna-seq-alignment-star")   
+#' app$input_matrix()   
+#' app$output_matrix()     
+#' ## get a flow
+#' app = a$public_app(id = "admin/sbg-public-data/star")   
+#' app$input_matrix()   
+#' app$output_matrix()  
+#' }
 App <- setRefClass("App", contains = "Item",
                    fields = list(id = "characterORNULL",
                        project = "characterORNULL",
                        name = "characterORNULL",
                        revision = "characterORNULL",
-                       raw = "ANY"),
+                       raw = "ANY",
+                       raw_obj = "ANY"),
                    methods = list(
+                       initialize = function(id = NULL,
+                                             project = NULL,
+                                             name = NULL, 
+                                             revision = NULL,
+                                             raw = NULL,
+                                             raw_obj = NULL, ...){
+                           id <<- id
+                           project <<- project
+                           name <<- name
+                           revision <<- revision
+                           raw <<- raw
+                           raw_obj <<- raw_obj
+                           callSuper(...)
+                       },
                        copyTo = function(project = NULL, name = NULL){
-                           auth$copyApp(id, project = project, name = name)
+                           auth$copy_app(id, project = project, name = name)
+                       },
+                       copy_to = function(project = NULL, name = NULL){
+                           copyTo(project = project, name = name)
                        },
                        cwl = function(revision = NULL, ...){
                            if(!is.null(revision)){
@@ -37,17 +69,69 @@ App <- setRefClass("App", contains = "Item",
                                             methods = "GET", ...)
                            raw
                        },
-                       input_type = function(){
+                       get_required = function(){
+                           obj = convert_app(.self)
+                           obj$get_required()
+                       },
+                       input_matrix = function(...){
                            if(is.null(raw)){
-                               stop("missing raw cwl detail, run apps$cwl()")
+                               message("get cwl raw file")
+                               cwl()
+                               raw_obj <<- convert_app(.self)
                            }
+                           if(is.null(raw_obj)){
+                               raw_obj <<- convert_app(.self)
+                           }
+                           
+                           raw_obj$input_matrix(...)
+                       },
+                       output_matrix = function(...){
+                           if(is.null(raw)){
+                               message("get cwl raw file")
+                               cwl()
+                               raw_obj <<- convert_app(.self)
+                           }
+                           if(is.null(raw_obj)){
+                               raw_obj <<- convert_app(.self)
+                           }
+                           
+                           raw_obj$output_matrix(...)
+                       },
+                       input_type = function(...){
+                           if(is.null(raw)){
+                               message("get cwl raw file")
+                               cwl()
+                           }
+                           # obj = convert_app(.self)
+                           # obj$input_type(...)
                            getInputType(raw)
                        },
-                       output_type = function(){
+                       output_type = function(...){
                            if(is.null(raw)){
-                               stop("missing raw cwl detail, run apps$cwl()")
+                               message("get cwl raw file")
+                               cwl()
                            }
+                           # obj = convert_app(.self)
+                           # obj$output_type(...)
+                           
                            getOutputType(raw)
+                       },
+                       set_batch = function(input = NULL,
+                                            criteria = NULL,
+                                            type = c("ITEM", "CRITERIA")){
+                           obj = convert_app(.self)
+                           if(is(obj, "Tool")){
+                               stop("Tool not supported for batching yet, only Workflow support batch")
+                           }
+                           
+                           obj$set_batch(input = input, criteria = criteria, type = type)
+                           message("updating app ...")
+                           p = auth$project(id = project)
+                           
+                           pattern<-".+\\/.+\\/(.+)/.+"
+                           shortname = str_match(id, pattern)[1, 2]
+                           p$app_add(shortname, obj)
+                           message("done")
                        },
                        input_check = function(input){
 

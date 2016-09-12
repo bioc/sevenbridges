@@ -94,9 +94,9 @@ RUN rm -rf /var/lib/apt/lists/ \
 ## thanks to official shiny docker file
 
 # Download and install libssl 0.9.8
-RUN wget --no-verbose http://ftp.us.debian.org/debian/pool/main/o/openssl/libssl1.0.0-dbg_1.0.2d-1_amd64.deb && \
-    dpkg -i libssl1.0.0-dbg_1.0.2d-1_amd64.deb && \
-    rm -f libssl1.0.0-dbg_1.0.2d-1_amd64.deb
+RUN wget --no-verbose http://ftp.us.debian.org/debian/pool/main/o/openssl/libssl1.0.2-dbg_1.0.2h-1_amd64.deb && \
+    dpkg -i libssl1.0.2-dbg_1.0.2h-1_amd64.deb && \
+    rm -f libssl1.0.2-dbg_1.0.2h-1_amd64.deb
 
 # Download and install shiny server
 RUN wget --no-verbose https://s3.amazonaws.com/rstudio-shiny-server-os-build/ubuntu-12.04/x86_64/VERSION -O "version.txt" && \
@@ -115,10 +115,14 @@ RUN R -e "devtools::install_github('rstudio/shinyapps')"
 
 RUN cp -R /usr/local/lib/R/site-library/shiny/examples/* /srv/shiny-server/
 
+RUN mkdir /home/rstudio/ShinyApps/
+
+RUN cp -R /usr/local/lib/R/site-library/shiny/examples/* /home/rstudio/ShinyApps/
+
 EXPOSE 3838 8787
 
 ## COPY src/shiny-server.sh /usr/bin/shiny-server.sh
-## COPY src/shiny-server.conf  /etc/shiny-server/shiny-server.conf
+COPY src/shiny-server.conf  /etc/shiny-server/shiny-server.conf
 COPY src/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 ## ~/ShinyApps

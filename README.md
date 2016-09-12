@@ -10,7 +10,7 @@
 
 
 
-[Bioconductor-Stable](http://www.bioconductor.org/packages/release/bioc/html/sevenbridges.html) |  [Bioconductor-Devel](http://bioconductor.org/packages/3.3/bioc/html/sevenbridges.html) 
+[Bioconductor-Stable](http://www.bioconductor.org/packages/release/bioc/html/sevenbridges.html) |  [Bioconductor-Devel](http://www.bioconductor.org/packages/devel/bioc/html/sevenbridges.html) 
 
 ##### Table of Contents  
 
@@ -129,10 +129,16 @@ rbx$toJSON(pretty = TRUE)
 rbx$toYAML()
 ```
 
-- Describe simple linear workflow by connect Tool objects like this
+- Utilities for Tool and Flow, for example
 
 ```r
-tool1 %>>% tool2 %>>% tool3
+# converting a SBG CWL json file
+library(sevenbridges)
+t1 = system.file("extdata/app", "tool_star.json", package = "sevenbridges")
+## convert json file into a Tool object
+t1 = convert_app(t1)
+# shows all input matrix
+t1$input_matrix() 
 ```
 
 <a name="install"/>
@@ -162,19 +168,37 @@ biocLite("sevenbridges")
 
 __[Latest]__ 
 
-You can always install the latest development version of the package from GitHub, it's always the most latest 
-version, fresh new,  with all new features and hot fixes, we push to bioconductor branch (release/devel) regularly.
+You can always install the latest development version of the package from GitHub, it's always the most latest version, fresh new,  with all new features and hot fixes, we push to bioconductor branch (release/devel) regularly.
+
+__If you don't have devtools__
+
+This require you have `devtools` package, install it from CRAN if you don't have it
 
 ```r
-# install.packages("devtools") if devtools was not installed
+install.packages("devtools") 
+```
+
+You may got an error and need system dependecies sometimes for curl and ssl, for example, in ubuntu you probably need to do this first in order to install `devtools` and in order to build vigenttes (you need pandoc)
+
+```
+apt-get update
+apt-get install libcurl4-gnutls-dev libssl-dev pandoc pandoc-citeproc
+```
+
+__If devtools is already installed__
+
+Now install latest version from github for `sevenbridges`
+
+```r
 source("http://bioconductor.org/biocLite.R")
+biocLite(c("readr", "BiocStyle"))
 library(devtools)
 install_github("sbg/sevenbridges-r", build_vignettes=TRUE, 
   repos=BiocInstaller::biocinstallRepos(),
   dependencies=TRUE)
 ```
 
-If you have trouble with pandoc,  set `build_vignettes = FALSE` to avoid vignettes build, 
+If you have trouble with pandoc and don't want to install pandoc,  set `build_vignettes = FALSE` to avoid vignettes build, 
 
 __[Bioconductor: Devel]__ 
 
@@ -196,38 +220,35 @@ library("sevenbridges")
 
 ### Tutorials 
 
-We have 3 different version (from stable to latest), 1) bioconductor stable 2) bioconductor devel 3) github for different levels of users and developers, so here are all tutorials and their corresponding version:
+We have 3 different version, github (latest), Bioconductor stable and devel. Only github version is provided below for latest docs. For other version,
+please visit Bioconductor homepage (link provide at the top). Tutorials below is auto-generated at 8:00pm everyday with github version.
 
 - Complete Guide for API R Client
-[[github](http://www.tengfei.name/sevenbridges/vignettes/api.html)]
-[[bioc-stable](http://www.bioconductor.org/packages/release/bioc/vignettes/sevenbridges/inst/doc/api.html)]
-[[bioc-devel](http://www.bioconductor.org/packages/3.4/bioc/vignettes/sevenbridges/inst/doc/api.html)]
+[[html](http://www.tengfei.name/sevenbridges/vignettes/api.html)]
+[[R script](http://www.tengfei.name/sevenbridges/vignettes/api.R)]
 - Tutorial: use R for Cancer Genomics Cloud
-[[github](http://www.tengfei.name/sevenbridges/vignettes/bioc-workflow.html)]
-[[bioc-stable](http://www.bioconductor.org/packages/release/bioc/vignettes/sevenbridges/inst/doc/bioc-workflow.html)]
-[[bioc-devel](http://www.bioconductor.org/packages/3.4/bioc/vignettes/sevenbridges/inst/doc/bioc-workflow.html)]
+[[html](http://www.tengfei.name/sevenbridges/vignettes/bioc-workflow.html)]
+[[R script](http://www.tengfei.name/sevenbridges/vignettes/bioc-workflow.R)]
 - Creating Your Docker Container and Command Line Interface
-[[github](http://www.tengfei.name/sevenbridges/vignettes/docker.html)]
-[[bioc-stable](http://www.bioconductor.org/packages/release/bioc/vignettes/sevenbridges/inst/doc/docker.html)]
-[[bioc-devel](http://www.bioconductor.org/packages/3.4/bioc/vignettes/sevenbridges/inst/doc/docker.html)]
+[[html](http://www.tengfei.name/sevenbridges/vignettes/docker.html)]
+[[R script](http://www.tengfei.name/sevenbridges/vignettes/docker.R)]
 - Describe CWL Tools/Workflows in R and Execution
-[[github](http://www.tengfei.name/sevenbridges/vignettes/apps.html)]
-[[bioc-stable](http://www.bioconductor.org/packages/release/bioc/vignettes/sevenbridges/inst/doc/apps.html)]
-[[bioc-devel](http://www.bioconductor.org/packages/3.4/bioc/vignettes/sevenbridges/inst/doc/apps.html)]
-- Using Rstudio and Shiny
-[[github](http://www.tengfei.name/sevenbridges/vignettes/rstudio.html)]
-[[bioc-stable](http://www.bioconductor.org/packages/release/bioc/vignettes/sevenbridges/inst/doc/rstudio.html)]
-[[bioc-devel](http://www.bioconductor.org/packages/3.4/bioc/vignettes/sevenbridges/inst/doc/rstudio.html)]
-- Reference 
-[[bioc-stable](http://www.bioconductor.org/packages/release/bioc/manuals/sevenbridges/man/sevenbridges.pdf)]
-[[bioc-devel](http://www.bioconductor.org/packages/3.4/bioc/manuals/sevenbridges/man/sevenbridges.pdf)]
+[[html](http://www.tengfei.name/sevenbridges/vignettes/apps.html)]
+[[R script](http://www.tengfei.name/sevenbridges/vignettes/apps.R)]
+- IDE container: Rstudio and Shiny server and more
+[[html](http://www.tengfei.name/sevenbridges/vignettes/rstudio.html)]
+[[R script](http://www.tengfei.name/sevenbridges/vignettes/rstudio.R)]
+- Find Data on CGC via Data Exploerer, SPARQL and Data API
+[[html](http://www.tengfei.name/sevenbridges/vignettes/cgc-sparql.html)]
+[[R script](http://www.tengfei.name/sevenbridges/vignettes/cgc-sparql.R)]
+
 
 <a name="rstudio"/>
 
 ### Launch Rstudio Server and Shiny Server with sevenbridges IDE docker container
 
 ```shell
-docker run  -d -p 8787:8787 -p 3838:3838 tengfei/sevenbridges
+docker run  -d -p 8787:8787 -p 3838:3838 --name rstudio_shiny_server tengfei/sevenbridges
 ```
 
 check out the ip from docker machine if you are on mac os.
@@ -236,29 +257,22 @@ check out the ip from docker machine if you are on mac os.
 docker-machine ip default
 ```
 
-In your browser, 
+In your browser, `http://<url>:8787/` for Rstudio server, for example, if 192.168.99.100 is what returned, visit `http://192.168.99.100:8787/` for Rstudio.
 
-`http://<url>:8787/` for Rstudio
 
-`http://<url>:3838/<username of rstudio>/app_dir` for Shiny server
+For shiny server, __per user app__ is hosted `http://<url>:3838/users/<username of rstudio>/<app_dir>` for Shiny server, for example for user `rstudio` (a default user) and some app called `01_hello`, it will be `http://<url>:3838/users/rstudio/01_hello/`. To develop your shiny app as Rstudio user, you can login your rstudio server, and create a fold at home folder called `~/ShinyApps` and develop shiny apps under that folder, for example, you can create an app called `02_text` at `~/ShinyApps/02_text/`.
 
-For example, if 192.168.99.100 is what returned, visit `http://192.168.99.100:8787/` for Rstudio.
-
-Note: for users of that Rstudio, just create `ShinyApps` folder under
-your home folder, then put your apps under that folder, so you can
-visit `http://<url>:3838/<username of rstudio>/<app name>` for your
-shiny apps. For example 
-
-In your Rstudio server launched from container, please run
+Login your rstudio at `http://<url>:8787`, then try to copy some example over to your home folder
 
 ```r
+dir.create("~/ShinyApps")
 file.copy("/usr/local/lib/R/site-library/shiny/examples/01_hello/", "~/ShinyApps/", recursive = TRUE)
 ```
 
-If you are login as username 'rstudio', then visit  `http://192.168.99.100:3838/rstudio/01_hello` you should be
-able to see the hello example.
+If you are login as username 'rstudio', then visit  `http://192.168.99.100:3838/rstudio/01_hello` you should be able to see the hello example.
 
 
+Note: Generic shiny app can also be hosted `http://<url>:3838/` or for particular app, `http://<url>:3838/<app_dir>` and inside the docker container, it's hosted under `/srv/shiny-server/`
 
 
 <a name="issue"/>
@@ -288,7 +302,9 @@ please note that the old API or project type will be deprecated.
 - __Q__: Why I always get warning message when I use API R client?<br />
   __A__: It only exists in Rstudio, potentially a bug in Rstudio. To ignore it use `options(warn = -1)`
 
-
+- __Q__: I still have some problem
+  __A__: Please try use the latest package on github, at least update to your package on Bioconductor, that usually solved the most recent bugs. 
+  
 <hr>
 
 © Seven Bridges Genomics 2012 - 2016. Licensed under the MIT license.

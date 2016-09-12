@@ -1,7 +1,7 @@
 Package: sevenbridges
 Type: Package
 Title: R Client for Seven Bridges Platform API and CWL Tool builder in R
-Version: 1.3.5
+Version: 1.3.7
 Date: 2015-05-01
 Author:  Tengfei Yin <tengfei.yin@sbgenomics.com>, Dusan Randjelovic <dusan.randjelovic@sbgenomics.com>, Nan Xiao <road2stat@gmail.com>
 Maintainer: Tengfei Yin <tengfei.yin@sbgenomics.com>
@@ -27,13 +27,15 @@ Imports:
     curl,
     liftr,
     rstudioapi,
-    uuid
+    uuid,
+    dplyr
 Suggests:
     BiocStyle,
     knitr,
     rmarkdown,
     testthat,
-    readr
+    readr,
+    clipr
 NeedsCompilation: no
 RoxygenNote: 5.0.1
 Collate:
