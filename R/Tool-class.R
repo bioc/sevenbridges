@@ -20,10 +20,10 @@
                 "sbg:modifiedOn" ,
                 "sbg:modifiedBy" ,
                 "sbg:revisionInfo" ,
+                "sbg:revisionNotes",
                 "sbg:toolkit",
                 "sbg:projectId",
                 "sbg:image_url", 
-                "sbg:stageInput",
                 "x")
 
 .sbg.fld <- gsub("sbg:", "", .sbg.items)
@@ -47,13 +47,14 @@ SBG <- setRefClass("SBG", contains  = "CWL", fields = list(
                                                  "sbg:id"  = "characterORNULL", 
                                                  "sbg:license" = "characterORNULL",
                                                  "sbg:revision" = "integerORNULL",
+                                                 "sbg:revisionNotes" = "characterORNULL",
                                                  "sbg:cmdPreview" = "characterORNULL",
                                                  "sbg:modifiedOn" = "integerORNULL",
                                                  "sbg:modifiedBy" = "characterORNULL", 
                                                  "sbg:revisionsInfo" = "listORNULL",
                                                  "sbg:toolkit" = "characterORNULL",
-                                                 "sbg:image_url" = "characterORNULL",
-                                                 "sbg:stageInput" = "characterORNULL"),
+                                                 "sbg:image_url" = "characterORNULL"
+                                                 ),
                    methods = list(initialize = function(homepage = NULL, 
                                       validationErrors = NULL,
                                       sbgMaintained = NULL,
@@ -75,17 +76,13 @@ SBG <- setRefClass("SBG", contains  = "CWL", fields = list(
                                       modifiedOn = NULL, 
                                       modifiedBy = NULL, 
                                       revisionsInfo = NULL, 
-                                      toolkit = NULL, 
-                                      stageInput = NULL, ...){
+                                      toolkit = NULL,
+                                      revisionNotes = NULL, ...){
 
                        args <- mget(names(formals()),sys.frame(sys.nframe()))
 
                        nms <- names(args)
-                       if(!is.null(stageInput)){
-                           if(!stageInput %in% c("copy", "link")){
-                               stop("stageInput has to be NULL, copy or link")
-                           }
-                       }
+                       
                        for(nm in nms){
                            .self$field(paste0("sbg:", nm), args[[nm]])                           
                        }
@@ -98,11 +95,12 @@ SBG <- setRefClass("SBG", contains  = "CWL", fields = list(
 
 ## Tool
 
-#' Rabix CommandLineTool Class
+#' Tool Class
 #'
-#' Rabix subclass for CommandLineTool used by rabix.org or sbg
-#' platform. \code{Tool} class extends \code{CommandLineTool}
-#' with more seven bridges fields.
+#' code{Tool} class extends \code{CommandLineTool} 
+#' with more seven bridges flabored fields the \code{SBG} class. \code{obj$toJSON()} 
+#' \code{obj$toJSON(pretty = TRUE)} or \code{obj$toYAML()} will convert a 
+#' \code{Tool} object into a text JSON/YAML file.
 #'
 #' 
 #' @field context [character] by default:
@@ -121,6 +119,20 @@ SBG <- setRefClass("SBG", contains  = "CWL", fields = list(
 #' t1$input_type()
 #' ## get output type information
 #' t1$output_type()
+#' ## return a input matrix with more informtion
+#' t1$input_matrix()
+#' ## return only a few fields
+#' t1$input_matrix(c("id", "type", "required"))
+#' ## return only required
+#' t1$input_matrix(required = TRUE)
+#' ## return everything
+#' t1$input_matrix(NULL)
+#' ## return a output matrix with more informtion
+#' t1$output_matrix()
+#' ## return only a few fields
+#' t1$output_matrix(c("id", "type"))
+#' ## return everything
+#' t1$output_matrix(NULL)
 #' ## get input id
 #' t1$input_id()
 #' ## get full input id with Tool name
@@ -262,10 +274,49 @@ Tool <-
                         res
                     },
                     input_type = function(){
+                        'this return a vector of types, names of them are input id'
                         getInputType(toList())
                     },
                     output_type = function(){
+                        'this return a vector of types, names of them are output id'
                         getOutputType(toList())
+                    },
+                    input_matrix = function(new.order = c("id", "label", "type", "required", "prefix", "fileTypes"),
+                                            required = NULL){
+                        'this return a matrix of input parameters, by default, following the order \
+                         id, label, type, required, prefix, fileTypes. new.order accept names of column you want to\
+                         print, but it has to be a field of inputs. When its set to NULL, it prints all fields. when \
+                         required = TRUE, only print required field. '
+                        res = suppressWarnings(as(inputs, "data.frame"))
+                        if(!is.null(required)){
+                            stopifnot(is.logical(required))
+                            res = res[res$required == required, ]
+                            if(!nrow(res)){
+                                return(NULL)
+                            }
+                        }
+                        if(!is.null(new.order)){
+                            new.order = intersect(new.order, names(res))
+                            res[, new.order]
+                            
+                        }else{
+                            res
+                        }
+                    
+                    },
+                    output_matrix = function(new.order = c("id", "label", "type", "fileTypes")){
+                        'this return a matrix of output parameters, by default, following the order \
+                         id, label, type, fileTypes. new.order accept names of column you want to\
+                         print, but it has to be a field of outputs. When its set to NULL, it prints all fields. when \
+                         required = TRUE, only print required field. '
+                        res = suppressWarnings(as(outputs, "data.frame"))
+                        if(!is.null(new.order)){
+                            new.order = intersect(new.order, names(res))
+                            res[, new.order]
+                            
+                        }else{
+                            res
+                        }
                     },
                     input_id = function(full = FALSE, requiredOnly = FALSE){
                         'get input id from a Tool, when full = TRUE, connect 
@@ -322,15 +373,31 @@ Tool <-
                        
                     },
                     get_required = function(){
-                        unname(unlist(sapply(inputs, function(i){
+                        'return required input fields types, names of them are input id'
+                        res = unname(unlist(sapply(inputs, function(i){
                             if(i$required){
                                 return(i$id)
                             }else{
                                 return(NULL)
                             }
                         })))
+                        if(length(res)){
+                            res = de_sharp(res)
+                            it = input_type()
+                            enms = names(it)
+                            
+                            it[enms %in% res]
+                        }else{
+                            return(NULL)
+                        }
+                        
                     },
                     set_required = function(ids, required = TRUE){
+                        'set an input node required or not required. The first \
+                         parameter takes single input id or more than one ids. \
+                         the second parameters \\code{required} is the value you \
+                         want to set to inputs. \\code{TRUE} means set to required.
+                        '
                         iid <- input_id()
                         ids <- addIdNum(ids)
                         idx = ids %in% iid
@@ -344,6 +411,8 @@ Tool <-
                         })
                     },
                     get_input_port = function(){
+                        'the inputs node with \\code{sbg:includeInPorts} equals \\code{TRUE}
+                        '
                         res = sapply(inputs, function(i){
                            
                             if(is.null(i$'sbg:includeInPorts')){
@@ -361,7 +430,9 @@ Tool <-
                         
                     },
                     set_input_port = function(ids, include = TRUE){
-                       
+                        'set inputs ports field \\code{sbg:includeInPorts} to the value of \
+                         include, default is \\code{TRUE}
+                        '
                         idx = match(ids, input_id())
                         if(length(idx)){
                             for(i in idx){
@@ -393,6 +464,7 @@ Tool <-
                         
                     },
                     get_output = function(name = NULL, id = NULL){
+                        'get output objects by names or id'
                         if(is.null(name) && is.null(id)){
                             stop("please provide name or id")
                         }
@@ -412,6 +484,15 @@ Tool <-
                             return(outputs[idx])
                         }
                     },
+                   
+                    copy_obj = function(){
+                        'this is a hack to make copy of reference cwl object'
+                        tmp = tempfile()
+                        write(toJSON(pretty = TRUE), tmp)
+                        res = convert_app(tmp)
+                        file.remove(tmp)
+                        res
+                    }, 
                     run = function(run_inputs = list(), engine = c("bunny", "rabix", "cwlrun")){
                         'run this tool with inputs locally. engine supported: bunny, rabix, cwlrun. 
                         inputs accept list or json'

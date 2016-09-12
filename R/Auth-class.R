@@ -311,6 +311,7 @@ if id provided, This call retrieves information about a selected invoice, includ
                                         res$items <- c(res$items, req$items)
                                         setTxtProgressBar(pb, i)
                                     }
+                                    cat("\n")
                                     res$href = NULL
                                 }else{
                                     return(req)
@@ -368,6 +369,7 @@ if id provided, This call retrieves information about a selected invoice, includ
                             exact = FALSE, detail = FALSE,  
                             metadata = list(), 
                             origin.task = NULL, 
+                            tag = NULL,
                             complete = FALSE, 
                             search.engine = c("server", "brute"), ...){
                             'This call returns a list of all files in a specified project that you can access. For each file, the call returns: 1) Its ID 2) Its filename The project is specified as a query parameter in the call.'
@@ -388,9 +390,12 @@ if id provided, This call retrieves information about a selected invoice, includ
                                 res <- setAuth(res, .self, "Files")
                                 return(res)                                
                             }
+                            
+                            ## build query 
 
                             .query <- list(project = project)
                             if(length(metadata)){
+                                
                                 new.meta <- unlist(metadata)
                                 names(new.meta) <- sapply(names(new.meta), 
                                                           function(nm) paste("metadata", nm, sep = "."))
@@ -401,12 +406,39 @@ if id provided, This call retrieves information about a selected invoice, includ
                             if(!is.null(origin.task)){
                                 .query <- c(.query, list(origin.task = origin.task))
                             }
+                            
+                            .split_item = function(x, list_name = NULL){
+                                if(length(x) > 1){
+                                    names(x)  = rep(list_name, length(x))
+                                    x
+                                }else{
+                                    if(is.list(x)){
+                                        x = x[[1]]
+                                    }
+                                    res = list(x)
+                                    names(res) = list_name
+                                    res
+                                }
+                            }
+                            
+                            if(!is.null(tag)){
+                               
+                                .new_tag = .split_item(tag, "tag")
+                                ## encode the tag for cases like "#1"
+                                .new_tag = lapply(.new_tag, URLencode, TRUE)
+                                .query <- c(.query, .new_tag)
+                            }
                          
                             
                           
                             
                             if(is.null(name)){
                                 ## if no id, no name, list all 
+                                
+                                if(!is.null(metadata) || !is.null(origin.task) || !is.null(tags)){
+                                    complete = FALSE
+                                }
+                                
                                 req <- api(path = 'files',  method = 'GET', 
                                            query = .query, complete = complete, ...)
                                 
@@ -422,19 +454,23 @@ if id provided, This call retrieves information about a selected invoice, includ
                                 
                             }
 
-                            ## search now by name
+                            ## search now by name or multiple names
                             ## get all files
                             switch(search.engine, 
                                    server = {
                                        if(exact){
-                                           .query = c(list(name = name), .query)
                                            
-                                           req <- api(path = 'files',  method = 'GET', 
-                                                      query = .query, complete = FALSE, ...)
+                                           .query = c(.split_item(name, "name"), .query)
                                            
-                                           res <- .asFilesList(req)[[1]] 
+                                           req = api(path = 'files',  method = 'GET', 
+                                                     query = .query, complete = FALSE, ...)
+                                           res = .asFilesList(req)
+                                           if(length(res) == 1){
+                                               res = res[[1]]
+                                           }
+                                           
                                        }else{
-                                           ## message("using 'brute' for name pattern matching, please use exact = TRUE if that's full exact name.")
+                                           ## use brute
                                            req <- api(path = 'files',  method = 'GET', 
                                                       query = .query, complete = complete, ...)
                                            
@@ -448,6 +484,7 @@ if id provided, This call retrieves information about a selected invoice, includ
                                                   query = .query, complete = complete, ...)
                                        
                                        res <- .asFilesList(req)
+                                       
                                        res <- m.match(res, id = id, name = name, exact = exact)
                                    })
                             
@@ -503,8 +540,8 @@ if id provided, This call retrieves information about a selected invoice, includ
                                 setAuth(res, .self, "Files")
                             }
                         },
-                        copy_file = function(...){
-                            copyFile(...)
+                        copy_file = function(id, project = NULL, name = ""){
+                            copyFile(id = id, project = project, name = name)
                         },
                         ## App API
                         app = function(name = NULL,
@@ -522,7 +559,7 @@ if id provided, This call retrieves information about a selected invoice, includ
                             visibility <- match.arg(visibility)
 
                             if(visibility == "public"){
-                                message("ignore project id, showing public apps")
+                                
                                 query <- c(query, list(visibility = "public"))
                             }
 
@@ -634,8 +671,12 @@ if id provided, This call retrieves information about a selected invoice, includ
                                 setAuth(res, .self, "App")
                             }
                         },
+                        copy_app = function(id, project = NULL, name = ""){
+                            copyApp(id = id, project = project, name = name)
+                        },
                         task = function(name = NULL,
                             id = NULL, project = NULL,
+                            parent = NULL, 
                             exact = FALSE, detail = FALSE,
                             status = c("all", "queued", "draft", "running", "completed", "aborted", "failed"),...){
 
@@ -647,28 +688,37 @@ if id provided, This call retrieves information about a selected invoice, includ
                                 res <- setAuth(res, .self, "Task")
                                 return(res)                                
                             }
-
-                            if(is.null(project)){
-                                ## list all files
+                            
+                            if(!is.null(parent)){
                                 if(status == "all"){
-                                    req <- api(path = 'tasks',  method = 'GET', ...)
+                                    req <- api(path = 'tasks',  method = 'GET', query = list(parent = parent), ...)
                                 }else{
-                                    req <- api(path = 'tasks',  method = 'GET', query = list(status = status), ...)
+                                    req <- api(path = 'tasks',  method = 'GET', 
+                                               query = list(status = status, parent = parent), ...)
                                 }
                             }else{
-                                ## list all files
-                                if(status == "all"){
-                                    req <- api(path = paste0("projects/", project, "/tasks"),
-                                               method = 'GET', , ...)
-                                    ## req <- api(path = 'tasks',  method = 'GET', query = list(project = project), ...)
+                                
+                                if(is.null(project)){
+                                    ## list all files
+                                    if(status == "all"){
+                                        req <- api(path = 'tasks',  method = 'GET', ...)
+                                    }else{
+                                        req <- api(path = 'tasks',  method = 'GET', query = list(status = status), ...)
+                                    }
                                 }else{
-                                    req <- api(path = paste0("projects/", project, "/tasks"),
-                                               method = 'GET',
-                                               query = list(status = status), ...)
-
+                                    ## list all files
+                                    if(status == "all"){
+                                        req <- api(path = paste0("projects/", project, "/tasks"),
+                                                   method = 'GET', , ...)
+                                        ## req <- api(path = 'tasks',  method = 'GET', query = list(project = project), ...)
+                                    }else{
+                                        req <- api(path = paste0("projects/", project, "/tasks"),
+                                                   method = 'GET',
+                                                   query = list(status = status), ...)
+                                        
+                                    }
                                 }
                             }
-
                             res <- .asTaskList(req)
 
                             ## matching
@@ -689,11 +739,12 @@ if id provided, This call retrieves information about a selected invoice, includ
                                     }else{
                                         ids <- res$id
                                     }
+                                    
                                     lst <- lapply(ids, function(id){
-                                        req <- api(path = paste0("taskss/", id), method = "GET", ...)
+                                        req <- api(path = paste0("tasks/", id), method = "GET", ...)
                                         .asTask(req)
                                     })
-                                    res <- TasksList(lst)
+                                    res <- TaskList(lst)
                                 }
                             }else{
                                 return(NULL)
@@ -916,13 +967,13 @@ setAuth <- function(res, auth, className = NULL){
 
 #' Read Auth config file to options 
 #' 
-#' 
+#' @param config file location, default is ".sbg.auth.yml" at home folder. 
 #' @rdname Auth-class
 #' @aliases updateAuthList
 #' @export updateAuthList
-updateAuthList <- function(){
+updateAuthList <- function(config = ".sbg.auth.yml"){
     lst <- getOption("sevenbridges")
-    lst$auth <- suppressMessages(.parseToken())
+    lst$auth <- suppressMessages(.parseToken(config))
     cat(as.yaml(lst$auth))
     options(sevenbridges = lst)
 }

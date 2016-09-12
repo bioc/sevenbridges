@@ -1,222 +1,3 @@
-## #' List Class generator.
-## #'
-## #' Extends IRanges SimpleList class and return constructor.
-## #' 
-## #' @param elementType [character]
-## #' @param suffix [character] default is "List"
-## #' @param contains [character] class name.
-## #' @param where environment.
-## #' @return S4 class constructor
-## setListClass <- function(elementType = NULL, suffix = "List",
-##                          contains = NULL, where = topenv(parent.frame())){
-##     stopifnot(is.character(elementType))
-##     name <- paste0(elementType, suffix)
-##     setClass(name, contains = c("SimpleList", contains), where = where,
-##              prototype = prototype(elementType = elementType))
-##     setMethod("show", name, function(object){
-##         lapply(object, show)
-##     })
-##     ## constructor
-##     function(...){
-##         listData <- .dotargsAsList(...)
-##         S4Vectors:::new_SimpleList_from_list(name, listData)
-##     }
-## }
-
-
-
-## ## Function from IRanges
-## .dotargsAsList <- function(...) {
-##     listData <- list(...)
-##   if (length(listData) == 1) {
-
-
-##       arg1 <- listData[[1]]
-##       if (is.list(arg1) || is(arg1, "List"))
-##         listData <- arg1
-##       ## else if (type == "integer" && class(arg1) == "character")
-##       ##   listData <- strsplitAsListOfIntegerVectors(arg1) # weird special case
-##   }
-##   listData
-## }
-
-
-
-deType <- function(x){
-
-    ## string
-    str_type <- c('STRING', 'STR', '<string>', '<str>', 'str', "character",
-                  "string", "String")
-    ## int
-    int_type <- c('INTEGER', 'INT', '<integer>', '<int>', 'int',
-                  "integer", "Integer")
-    ## float
-    float_type <- c('FLOAT', '<float>', 'float', 'Float')
-    ## File
-    file_type <- c('FILE', '<file>', 'File', 'file')
-    
-    ## enum
-    enum_type <- c('ENUM', '<enum>', 'enum', "Enum")
-
-    .array <- FALSE
-    if(is.character(x)){
-        res <- ""        
-        if(grepl("\\.\\.\\.", x)){
-            .array <- TRUE
-            x <- gsub("[^[:alnum:]]", "", x)
-        }
-
-        if(x %in% str_type){
-            res <- "string"
-        }else if(x %in% int_type){
-            res <- "int"
-        }else if(x %in% float_type){
-            res <- "float"
-        }else if(x %in% file_type){
-            res <- "File"
-        }else if(x %in% enum_type){
-            res <- "enum"
-        }else{
-            res <- x
-        }
-        if(.array){
-            res <- ItemArray(res)
-        }
-    }else{
-        res <- x
-    }
-   res
-}
-
-
-#' add \code{#} prefix to id
-#'
-#' add \code{#} prefix to id
-#'
-#' @param x (character) with \code{#} or not.
-#'
-#' @return a character with \code{#} prefix.
-#'
-#' @export addIdNum
-#' @examples
-#' addIdNum(c("bam", "#fastq"))
-addIdNum <- function(x){
-    if(!is.null(x)){
-        sapply(x, .addIdNum)
-    }else{
-        NULL
-    }
-    
-}
-
-.addIdNum <- function(x){
-    if(!is.null(x)){
-        x <- parseLabel(x)
-        .first <- substr(x, 1, 1)
-        if(.first != "#"){
-            return(paste0("#", x))
-        }else{
-            return(x)
-        }
-    }else{
-        return(NULL)
-    }
-}
-
-parseLabel <- function(x){
-    gsub("[[:space:]]+", "_", x)
-}
-
-getId <- function(x){
-    addIdNum(x$label)
-}
-
-getInputId <- function(x){
-    .id <- addIdNum(x$label)
-    ins <- x$inputs
-    if(length(ins)){
-    lapply(ins, function(i){
-        .in.id <- gsub("^#", "", i$id)
-        paste(.id, .in.id, sep = ".")
-    })}else{
-        return(NULL)
-    }
-}
-
-
-
-getOutputId <- function(x){
-    .id <- addIdNum(x$label)
-    os <- x$outputs
-    if(length(os)){
-    lapply(os, function(i){
-        .out.id <- gsub("^#", "", i$id)
-        paste(.id, .out.id, sep = ".")
-    })}else{
-        return(NULL)
-    }
-}
-
-make_type = function(.t){
-    .t = sapply(.t, function(s){
-    ## file array problem
-    if(!is.null(names(s)) && "type" %in% names(s)){
-        if(s$type == "array"){
-            return(paste0(s$items, "..."))
-        }else if(s$type == "enum"){
-            return("enum")
-        }else{
-            return("null")
-        }
-    }else{
-        if(is.list(s)){
-            return(s[[1]])
-        }else{
-            if(length(s) > 1){
-                return(s[s != "null"])
-            }else{
-                return(s)
-            }
-            
-        }
-        
-    }
-    })
-    .t[.t != "null"]
-}
-
-getInputType <- function(x){
-    ins <- x$inputs
-    if(length(ins)){
-        sapply(ins, function(i){
-            .t <- i$type
-            .id <- gsub("^#", "", i$id)
-            .t <- make_type(.t)
-            res <- .t
-            names(res) <- .id
-            res
-        })}else{
-            NULL
-        }
-}
-
-getOutputType <- function(x){
-    os <- x$outputs
-    if(length(os)){
-        sapply(os, function(i){
-            
-            .t <- i$type
-            .id <- gsub("^#", "", i$id)
-            .t <- make_type(.t)
-    
-            res <- .t
-            names(res) <- .id
-            res
-        })}else{
-            NULL
-        }
-}
-
 #' Class CWL
 #'
 #' Define CWL class and generic methods, no fields defeind.
@@ -310,7 +91,7 @@ CWL <- setRefClass("CWL",
                                           showDefault(.self)
                                       }
                                   })
-                       }                       
+                       }
                    ))
 
 #' Convert a object slots/fields to a list, json, yaml file
@@ -787,6 +568,7 @@ Expression <- setRefClass("Expression",
                           ))
 setClassUnion("ExpressionORNULL", c("Expression", "NULL"))
 setClassUnion("characterORExpression", c("character", "Expression"))
+setClassUnion("integerORExpression", c("integer", "Expression"))
 setClassUnion("characterORExpressionORNULL", c("character", "Expression", "NULL"))
 setClassUnion("characterORExpressionORlistORNULL", c("character", "Expression", "list", "NULL"))
 ########################################################################
@@ -1096,6 +878,15 @@ ScatterFeatureRequirement <-
                     }                    
                 ))
 
+#' ProcessRequirementList
+#' 
+#' @aliases ProcessRequirementList-class
+#'
+#' @export ProcessRequirementList
+#' @exportClass ProcessRequirementList
+#' @rdname ProcessRequirement
+ProcessRequirementList <- setListClass("ProcessRequirement")
+
 
 #' @section ExpressionEngineRequirement Class:
 #' \describe{
@@ -1129,9 +920,9 @@ ScatterFeatureRequirement <-
 #' @aliases ExpressionEngineRequirement
 ExpressionEngineRequirement <-
     setRefClass("ExpressionEngineRequirement", contains = "ProcessRequirement",
-                fields = list(
+                fields = list(             
                     id = "characterORNULL",
-                    requirements = "ProcessRequirement",
+                    requirements = "ProcessRequirementList",
                     engineCommand = "characterORNULL",
                     engineConfig = "characterORNULL"
                 ),
@@ -1195,6 +986,20 @@ setRefClass("SchemaDefRequirement", contains = "ProcessRequirement",
 #' @examples
 #' Binding(loadContents = TRUE, secondaryFiles = "./test.txt")
 Binding <- setRefClass("Binding", contains = "CWL", 
+                       method = list(
+                           initialize = function(loadContents = NULL,
+                                                 secondaryFiles = NULL, ...){
+                               
+                               if(is.character(secondaryFiles)){
+                                   secondaryFiles <<- set_box(secondaryFiles)
+                               }else{
+                                   secondaryFiles <<- secondaryFiles
+                               }
+                               loadContents <<- loadContents
+                               callSuper(...)
+                           }
+                           
+                       ),
                        fields = list(
                            loadContents = "logicalORlistORNULL",
                            secondaryFiles = "characterORExpressionORlistORNULL" ## fixme: should be a list
@@ -1302,14 +1107,6 @@ InputParameterList <- setListClass("InputParameter")
 #' @rdname Parameter
 OutputParameterList <- setListClass("OutputParameter")
 
-#' ProcessRequirementList
-#' 
-#' @aliases ProcessRequirementList-class
-#'
-#' @export ProcessRequirementList
-#' @exportClass ProcessRequirementList
-#' @rdname ProcessRequirement
-ProcessRequirementList <- setListClass("ProcessRequirement")
 
 #' Process Class
 #'
@@ -1553,6 +1350,7 @@ CommandLineBinding <- setRefClass("CommandLineBinding",
                                   contains = c("Binding", "CWL"),
                                   fields = list(
                                       position = "integerORNULL",
+                                      ## order = "integerORNULL", # not exist in CWL spec
                                       prefix = "characterORNULL",
                                       separate = "logical",
                                       itemSeparator = "characterORNULL",
@@ -1563,13 +1361,18 @@ CommandLineBinding <- setRefClass("CommandLineBinding",
                                           position = 0L,
                                           separate = TRUE,
                                           valueFrom = NULL,
+                                          order = NULL, ## hack to pass order
+                                          inputBinding = NULL, ## hack to pass inputBinding
                                           ...){
 
                                           if(is.list(valueFrom)){
                                               valueFrom <<- do.call(Expression, valueFrom)
+                                          }else{
+                                              valueFrom <<- valueFrom
                                           }
                                           position <<- as.integer(position)
                                           separate <<- separate
+                                          ## order <<- order
                                           callSuper(...)
                                       }
                                   ))
@@ -1790,9 +1593,9 @@ CommandLineTool <- setRefClass("CommandLineTool",
                                        baseCommand = NULL,
                                        ...){
                                        
-                                       if(is.null(baseCommand)){
-                                           stop("baseCommand has to be provided")
-                                       }
+                                       # if(is.null(baseCommand)){
+                                       #     stop("baseCommand has to be provided")
+                                       # }
                                        if(!is.list(baseCommand)){
                                            if(is.character(baseCommand)){
                                                baseCommand <<- list(baseCommand)
@@ -1805,14 +1608,19 @@ CommandLineTool <- setRefClass("CommandLineTool",
                                                        valueFrom = arguments
                                                    ))
                                            }
-                                       }
-                                       if(is(arguments, "CommandLineBinding")){
+                                       }else if(is(arguments, "CommandLineBinding")){
                                            arguments <<- CCBList(arguments)
+                                       }else if(is.list(arguments)){
+                                           ## need to construct CLB list
+                                          
+                                           arguments <<- do.call(CCBList, lapply(arguments, function(x){
+                                               do.call(CLB, x)
+                                           }))
+                                           
+                                       }else{
+                                           arguments <<- arguments 
                                        }
-                                       if(is(arguments,
-                                             "characterORCommandLineBindingList")){
-                                           arguments <<- arguments
-                                       }
+                                      
                                        class <<- class
                                        callSuper(...)
                                    }
@@ -2504,19 +2312,29 @@ SCLB <- SBGCommandLineBinding <- setRefClass("SBGCommandLineBinding", contains =
 SBGInputParameter <- setRefClass("SBGInputParameter", contains = "InputParameter",
                                  fields = list("sbg:category" = "characterORlistORNULL",
                                      "sbg:fileTypes" = "characterORNULL",
+                                     "sbg:stageInput" = "characterORNULL",
                                      "sbg:x" = "numericORNULL",
                                      "sbg:y" = "numericORNULL",
                                      "sbg:includeInPorts" = "logicalORNULL",
                                      "sbg:toolDefaultValue" = "characterORNULL",
                                      "sbg:altPrefix" = "characterORNULL",
-                                     "required" = "logicalORNULL"),
+                                     "required" = "logicalORNULL", 
+                                     "batchType" = "characterORNULL"),
                                  methods = list(
                                      initialize = function(category = NULL,
-                                         fileTypes = NULL,
+                                         fileTypes = NULL, stageInput = NULL,
                                          x = NULL, y = NULL, includeInPorts = NULL,
                                          toolDefaultValue = NULL, altPrefix = NULL,
-                                         required = FALSE, 
+                                         required = FALSE, batchType = NULL,
                                          ...){
+                                         
+                                         if(!is.null(stageInput)){
+                                             if(!stageInput %in% c("copy", "link")){
+                                                 stop("stageInput has to be NULL, copy or link")
+                                             }
+                                         }
+                                         
+                                         .self$field("sbg:stageInput", stageInput)
                                          .self$field("sbg:category", category)
                                          .self$field("sbg:fileTypes", fileTypes)
                                          .self$field("sbg:x", x)
@@ -2524,6 +2342,7 @@ SBGInputParameter <- setRefClass("SBGInputParameter", contains = "InputParameter
                                          .self$field("sbg:includeInPorts", includeInPorts)
                                          .self$field("sbg:toolDefaultValue", toolDefaultValue)
                                          .self$field("sbg:altPrefix", altPrefix)
+                                         .self$field("batchType", batchType)
                                          .self$field("required", required)
                                          callSuper(...)                                     
                                      }))
@@ -2538,11 +2357,12 @@ input <- function(id = NULL, type = NULL, label = "",
                   description = "", streamable = FALSE,
                   default = "", required = FALSE,
                   category = NULL, fileTypes = NULL, 
+                  stageInput = NULL, 
                   cmdInclude = FALSE, ...){
 
-    if(is.null(id)){
-        stop("id has to be provided")
-    }
+    # if(is.null(id)){
+    #     stop("id has to be provided")
+    # }
 
     if(!length(label)){
         label <- id
@@ -2559,13 +2379,15 @@ input <- function(id = NULL, type = NULL, label = "",
                 ib <- do.call(SCLB, o.b)
             }
     
+            
             o <- c(o[!names(o) %in% c("inputBinding", "sbg:category","required",
-                                      "sbg:fileTypes", "type")],
+                                      "sbg:fileTypes", "type", "fileTypes", "sbg:stageInput")],
                    list(inputBinding = ib,
                         required = is_required(o),
                         type = format_type(o$type),
                         category = o[["sbg:category"]],
-                        fileTypes = o[["sbg:fileTypes"]]))
+                        fileTypes = o[["sbg:fileTypes"]],
+                        stageInput = o[["sbg:stageInput"]]))
 
             do.call(SBGInputParameter, o)
         })
@@ -2597,11 +2419,13 @@ input <- function(id = NULL, type = NULL, label = "",
                           description = description,
                           streamable = streamable,
                           default = default, category = category, fileTypes = fileTypes,
+                          stageInput = stageInput,
                           inputBinding = SCLB(cmdInclude = cmdInclude, ...))
     }else{
         SBGInputParameter(id = id, type = type, label = label,
                           description = description,
                           streamable = streamable,
+                          stageInput = stageInput,
                           default = default, category = category, fileTypes = fileTypes,
                           inputBinding = NULL)
     }
@@ -2646,9 +2470,9 @@ output <- function(id = NULL, type = "file", label = "", description = "",
                    streamable = FALSE, default = "", fileTypes = NULL, ...){
 
 
-    if(is.null(id)){
-        stop("id has to be provided")
-    }
+    # if(is.null(id)){
+    #     stop("id has to be provided")
+    # }
 
     if(!length(label)){
         label <- id
@@ -2691,7 +2515,7 @@ output <- function(id = NULL, type = "file", label = "", description = "",
                          secondaryFiles = o$seconaryFiles)
             
             o <- c(o[!names(o) %in% 
-                     c("sbg:fileTypes", "outputBinding", "type", 
+                     c("sbg:fileTypes", "outputBinding", "type", "fileTypes",
                        "sbg:inheritMetadataFrom", "sbg:metadata")],
                    list(type = format_type(o$type),
                         outputBinding = ob,
@@ -2750,14 +2574,18 @@ output <- function(id = NULL, type = "file", label = "", description = "",
 CPURequirement <-
     setRefClass("CPURequirement", contains = "ProcessRequirement",
                 fields = list(
-                    value = "integer"
+                    value = "integerORExpression"
                 ),
                 methods = list(
                     initialize = function(value = 1L,
                         class = "sbg:CPURequirement", ...){
                         class <<- class
-                        stopifnot(is.numeric(value))
-                        .v <- as.integer(value)
+                        if(is.numeric(value)){
+                            .v <- as.integer(value)
+                        }else{
+                            .v <- do.call(Expression, value)
+                        }
+                        
                         # comment out this, conform to server requirements
                         # if(!.v %in% c(1L, 0L)){
                         #     warning("For now, CPU value must be 0L (multi-treads) or 1L (single-thread)")
@@ -2791,8 +2619,8 @@ cpu <- CPURequirement
 #' @export docker
 #' @examples
 #' docker("rocker/r-base")
-docker <- function(pull = "", imageId = "", load = "", 
-                   file = "", output = "",
+docker <- function(pull = NULL, imageId = NULL, load = NULL, 
+                   file = NULL, output = NULL,
                    dockerPull = pull,
                    dockerImageId = imageId,
                    dockerLoad = load,
@@ -2862,7 +2690,7 @@ requirements <- function(...){
                        return(do.call("ScatterFeatureRequirement", x))
                    },
                    "ExpressionEngineRequirement" = {
-                       req <- requirements(x$requirements)[[1]]
+                       req <- requirements(x$requirements)
                        res <- ExpressionEngineRequirement(id = x$id,
                                                           requirements = req,
                                                           engineCommand = x$engineCommand,
@@ -2923,12 +2751,18 @@ fileDef <- function(name = NULL, content = NULL){
 MemRequirement <-
     setRefClass("MemRequirement", contains = "ProcessRequirement",
                 fields = list(
-                    value = "integer"
+                    value = "integerORExpression"
                 ),
                 methods = list(
                     initialize = function(value = 1000L,
                                           class = "sbg:MemRequirement", ...){
-                        value <<- as.integer(value)
+                      
+                        if(is.numeric(value)){
+                            .v <- as.integer(value)
+                        }else{
+                            .v <- do.call(Expression, value)
+                        }
+                        value <<- .v
                         class <<- class
                         callSuper(...)
                     }
@@ -2986,7 +2820,7 @@ SBGStep <- setRefClass("SBGStep", contains = "WorkflowStep",
                        fields = list("sbg:x" = "numericORNULL",
                            "sbg:y" = "numericORNULL"),
                        methods = list(
-                           initialize = function(x = NULL, y = NULL, ...){
+                           initialize = function(x = NULL, y = NULL,  ...){
                                args <- mget(names(formals()),
                                             sys.frame(sys.nframe()))
                                nms <- c("x", "y")
@@ -3000,105 +2834,170 @@ SBGStep <- setRefClass("SBGStep", contains = "WorkflowStep",
 SBGStepList <- setListClass("SBGStep", contains = "WorkflowStepList")
 
 
-## cwl utils
 
-#' get class from cwl json file
-#' 
-#' get class from cwl json file
-#' 
-#' @param input cwl json file path
-#' 
-#' @return character for cwl class "Workflow" or "CommandLineTool"
-#' @export get_cwl_class is_commandlinetool is_workflow
-#' @rdname cwl-utils
-#' @aliases is_commandlinetool is_workflow
-#' @examples
-#' tool.in = system.file("extdata/app", "tool_unpack_fastq.json", package = "sevenbridges")
-#' flow.in = system.file("extdata/app", "flow_star.json", package = "sevenbridges")
-#' get_cwl_class(tool.in)
-#' is_commandlinetool(tool.in)
-#' is_workflow(tool.in)
-#' get_cwl_class(flow.in)
-#' is_commandlinetool(flow.in)
-#' is_workflow(flow.in)
-get_cwl_class = function(input){
-    fromJSON(input)$class
-}
+setAs("SBGInputParameter", "data.frame", function(from){
 
-is_commandlinetool = function(input){
-    get_cwl_class(input) == "CommandLineTool"
-}
+    lst = from$toList()
+    ib = lst$inputBinding
+    res =  c(lst[!names(lst) %in% c("inputBinding", "sbg:category","required",
+                                    "sbg:fileTypes", "type", "fileTypes", "sbg:stageInput")],
+             list(
+                 ## inputBinding = ib,
+                 required = is_required(lst),
+                 type = make_type(lst$type),
+                 category = lst[["sbg:category"]],
+                 fileTypes = lst[["sbg:fileTypes"]],
+                 stageInput = lst[["sbg:stageInput"]]),
+             ib)
+    
+    res = lapply(res, function(x){
+        if(is.null(x))
+            return("null")
+        else
+            return(x)
+    })
+    res = do.call(data.frame, res)
+    .fullnames = names(res)
+    
+    .names.sbg = sort(.fullnames[grep("^sbg", .fullnames)])
+    .names.other = sort(setdiff(.fullnames, .names.sbg))
+    .names.priority = c("id", "type", "required", "fileTypes", "label")
+    .names.p2 = sort(setdiff(.names.other, .names.priority))
+    new.order = c(.names.priority, .names.p2, .names.sbg)
+    
+    res[, new.order]
+})
 
-is_workflow = function(input){
-    get_cwl_class(input) == "Workflow"
-}
+setAs("InputParameterList", "data.frame", function(from){
+    lst = lapply(from, function(x){
+        as(x, "data.frame")
+    })
+    res = do.call("bind_rows", lst)
+    ## reorder for File File...
+    idx = res$type %in% c("File", "File...")
+    res1 = res[idx, ]
+    res2 = res[!idx, ]
+    rbind(res1, res2)
+})
 
-## format type list into a DSCList
-format_type = function(x){
-    lst = lapply(x, .format_type)
-    if(all(sapply(lst, is.character))){
-        return(unlist(lst))
-    }
-    do.call(DSCList, lst)
-}
 
-
-.format_type = function(x){
-    if("type" %in% names(x)){
-        switch(x$type, 
-               array = {
-                   do.call(ItemArray, x)
-               },
-               enum = {
-                   do.call(enum, x)
-               })
+setAs("SBGCommandOutputParameter", "data.frame", function(from){
+    
+    lst = from$toList()
+    
+    o.b <- lst$outputBinding
+    ## glob
+    if(length(o.b$glob) == 1 && is.character(o.b$glob)){
+        res.glob <- o.b$glob
     }else{
-        as.character(x)
+        res.glob <- o.b$glob$script
     }
-}
+    ## load Contents
+    if(length(o.b$loadContents)){
+        res.load <- o.b$loadContetns
+    }else{
+        res.load <- NULL
+    }
+    ## 
+    if(length(o.b$outputEval)){
+        if(length(o.b$outputEval) == 1 &&
+           is.character(o.b$outputEval)){
+            res.eval <- o.b$outputEval
+        }else{
+            res.eval <- o.b$outputEval$script
+        }
+    }else{
+        res.eval <- NULL
+    }
+    ob <- list(glob = res.glob,
+                 loadContents = res.load,
+                 outputEval = res.eval,
+                 inheritMetadataFrom = lst$`sbg:inheritMetadataFrom`,
+                 metadata = lst$`sbg:metadata`,
+                 secondaryFiles = lst$seconaryFiles)
+    
+    
+    res =  c(lst[!names(lst) %in% c("sbg:fileTypes", "outputBinding", "type", "fileTypes",
+                                    "sbg:inheritMetadataFrom", "sbg:metadata")],
+             list(type = make_type(lst$type),
+                
+                  fileTypes = lst[["sbg:fileTypes"]]), ob)
+                 
+            
+    
+    res = lapply(res, function(x){
+        if(is.null(x))
+            return("null")
+        else
+            return(x)
+    })
+    
+    res = do.call(data.frame, res)
+    .fullnames = names(res)
+    
+    .names.sbg = sort(.fullnames[grep("^sbg", .fullnames)])
+    .names.other = sort(setdiff(.fullnames, .names.sbg))
+    .names.priority = c("id", "label", "type")
+    .names.p2 = sort(setdiff(.names.other, .names.priority))
+    new.order = c(.names.priority, .names.p2, .names.sbg)
+    
+    res[, new.order]
+})
 
-get_id_from_label = function(x, suffix = "#"){
-    paste0(suffix, gsub("[[:space:]+]", "_", x))
-}
+setAs("OutputParameterList", "data.frame", function(from){
+    lst = lapply(from, function(x){
+        as(x, "data.frame")
+    })
+    res = do.call("bind_rows", lst)
+    ## reorder for File File...
+    idx = res$type %in% c("File", "File...")
+    res1 = res[idx, ]
+    res2 = res[!idx, ]
+    rbind(res1, res2)
+})
 
-de_sharp = function(x){
-    gsub("[#+]", "", x)
-}
 
-add_sharp = addIdNum
-
-is_full_name = function(x){
-    grepl("[.]", x)
-}
-
-get_tool_id_from_full = function(x){
+setAs("SBGWorkflowOutputParameter", "data.frame", function(from){
+    
+    lst = from$toList()
    
-    sapply(x, function(i){
-        if(is_full_name(i)){
-            add_sharp(strsplit(i, "\\.")[[1]][1])
-        }else{
-            add_sharp(i)
-        }
-        
-        
+   
+    res =  c(lst[!names(lst) %in% c("sbg:fileTypes", "type", "fileTypes",
+                                    "sbg:inheritMetadataFrom", "sbg:metadata")],
+             list(type = make_type(lst$type),
+                  
+                  fileTypes = lst[["sbg:fileTypes"]]))
+    
+    
+    
+    res = lapply(res, function(x){
+        if(is.null(x))
+            return("null")
+        else
+            return(x)
     })
-}
-get_input_id_from_full = function(x){
-  
-    sapply(x, function(i){
-        if(is_full_name(i)){
-            add_sharp(strsplit(i, "\\.")[[1]][2])
-        }else{
-            add_sharp(i)
-        }
-        
-        
+    
+    res = do.call(data.frame, res)
+    .fullnames = names(res)
+    
+    .names.sbg = sort(.fullnames[grep("^sbg", .fullnames)])
+    .names.other = sort(setdiff(.fullnames, .names.sbg))
+    .names.priority = c("id", "label", "type")
+    .names.p2 = sort(setdiff(.names.other, .names.priority))
+    new.order = c(.names.priority, .names.p2, .names.sbg)
+    
+    res[, new.order]
+})
+
+setAs("SBGWorkflowOutputParameterList", "data.frame", function(from){
+    lst = lapply(from, function(x){
+        as(x, "data.frame")
     })
-}
-
-
-
-
-
-
+    res = do.call("bind_rows", lst)
+    ## reorder for File File...
+    idx = res$type %in% c("File", "File...")
+    res1 = res[idx, ]
+    res2 = res[!idx, ]
+    rbind(res1, res2)
+})
 
