@@ -4,20 +4,24 @@
 \alias{set_test_env}
 \title{Set testing env}
 \usage{
-set_test_env(type, docker_image, data_dir)
+set_test_env(type = "host", docker_image = "tengfei/testenv",
+  data_dir = getwd())
 }
 \arguments{
 \item{type}{"dind" or "host"}
 
-\item{docker_image}{required docker image with pre-installed bunny, default: tengfei/testenv}
+\item{docker_image}{required docker image with
+pre-installed bunny, default: tengfei/testenv}
 
-\item{data_dir}{directory with data to mount (also will be execution directory)}
+\item{data_dir}{directory with data to mount
+(also will be execution directory)}
 }
 \value{
 docker stdout
 }
 \description{
-Checks if docker is installed, is running and has required images downloaded and if do creates container
+Checks if docker is installed, is running and has
+required images downloaded and if do creates container
 }
 \examples{
 \dontrun{
