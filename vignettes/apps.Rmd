@@ -1,19 +1,14 @@
 ---
 title: "Describe CWL Tools/Workflows in R and Execution"
 output:
-  BiocStyle::html_document:
+  rmarkdown::html_vignette:
     toc: true
     toc_depth: 4
     number_sections: false
-    highlight: haddock
-    css: style.css
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{Describe CWL Tools/Workflows and Execution}
 ---
-
-<!--
-%\VignetteIndexEntry{Describe CWL Tools/Workflows and Execution}
-%\VignettePackage{sevenbridges}
-%\VignetteEngine{knitr::rmarkdown}
--->
 
 ```{r include=FALSE}
 knitr::opts_chunk$set(comment = "")
@@ -27,9 +22,9 @@ Note: Right now we are supporting CWL draft 2 with SBG extension, but we will su
 
 ## App, Workflow and Tool
 
-In our terminology, a __workflow__ is composed of one or more __tool__, both of them are just __app__ to users. You can imagine some raw input data go through a pipeline with many nodes that each step perform a function on the data in the flow, and in the end, you got want you want: a fully processed data or result (plot, report, action)
+In our terminology, a __workflow__ is composed of one or more __tool__, both of them are just __app__ to users. You can imagine some raw input data go through a pipeline with many nodes that each step perform a function on the data in the flow, and in the end, you got want you want: a fully processed data or result (plot, report, action).
 
-Here are some key ideas
+Here are some key ideas:
 
 - Tool is the unit or a single node of workflow, so different tools could be connected into a workflow. That's how we achieve reusability of components.
 - Tool is described with key components: input, output, parameters and requirements and more details. You understand the tool more like a black box (container) which digest some input(s) with specified setup and output another format. 
@@ -38,7 +33,7 @@ Here are some key ideas
 - App could be described in JSON/YAML format, following Common Workflow Language (CWL) open-source standard. 
 - CWL is just the collection of logic and schema. To execute this __pure text file__, we need executor in the cloud or local. With Seven Bridges platform, you can simply execute it at scale.
 
-Looks like full of jargons and hard to understand. Here is an example. You have a csv table, full of missing value and you want to process it in 3 step
+Looks like full of jargons and hard to understand. Here is an example. You have a csv table, full of missing value and you want to process it in 3 steps:
 
 1. replace missing value 
 2. filtering out rows that column "age" is smaller than 10
@@ -54,15 +49,14 @@ Why we are using CWL? Imagine a single file represeting a tool or workflow,  cou
 
 The main interface provided by `sevenbridges` package is `Tool` function, it's much more straight forward to describe than composing your raw CWL json file from scratch. A "Tool" object in R could be exported into JSON or imported from a CWL JSON file.  
 
-
-I highly recommend user go over documentation [The Tool Editor](http://docs.cancergenomicscloud.org/docs/the-tool-editor) chapter for cancer genomic cloud to understand how it works, and even try it on the platform with the GUI. This will help understand our R interface better.
+I highly recommend going over documentation [The Tool Editor](http://docs.cancergenomicscloud.org/docs/the-tool-editor) chapter for the Cancer Genomics Cloud to understand how it works, and even try it on the platform with the GUI. This will help understand our R interface better.
 
 ### Import from JSON file
 
 Sometimes people share Tool in pure JSON text format. You can simply load it into R by using `convert_app` function, this will recognize your JSON file class (Tool or Workflow) automatically.
 
 ```{r}
-library(sevenbridges)
+library("sevenbridges")
 t1 = system.file("extdata/app", "tool_star.json", package = "sevenbridges")
 ## convert json file into a Tool object
 t1 = convert_app(t1)
@@ -159,7 +153,7 @@ If you already have a docker image in mind that provide the functionality you ne
 In this simple example, I know docker image "rocker/r-base" has a function called `runif` I can directly called in command line with `Rscript -e`. Then I want the ouput is collected in `stdout` and ask the file system to capture the files matches "*.txt". Please pay attention to this, you tool may produce many intermediate files in current folder, if you don't tell which output you need, they will all be ignored, so make sure you collect those files via `outputs` parameter.
 
 ```{r}
-library(sevenbridges)
+library("sevenbridges")
 rbx <- Tool(id = "runif", 
             label = "runif",
             hints = requirements(docker(pull = "rocker/r-base")), 
@@ -191,7 +185,7 @@ fd <- fileDef(name = "runif.R",
 
 ## read via reader
 .srcfile <- system.file("docker/sevenbridges/src/runif.R", package = "sevenbridges")
-library(readr)
+library("readr")
 fd <- fileDef(name = "runif.R",
               content = read_file(.srcfile))
 
@@ -212,7 +206,7 @@ How about multiple script?
 ```{r}
 ## or simply readLines
 .srcfile <- system.file("docker/sevenbridges/src/runif.R", package = "sevenbridges")
-library(readr)
+library("readr")
 fd1 <- fileDef(name = "runif.R",
               content = read_file(.srcfile))
 fd2 <- fileDef(name = "runif2.R",
@@ -367,7 +361,7 @@ Ignore the comment part, I will introduce spin/stich later.
 Then just describe my tool in this way, add your script as you learned in previous sections.
 
 ```{r}
-library(readr)
+library("readr")
 fd <- fileDef(name = "runif.R",
               content = read_file(fl))
 
@@ -409,7 +403,7 @@ cat(readLines(fl), sep = '\n')
 Then just describe my tool in this way, note, I use `separate=FALSE` and add `=` to my prefix as a hack.
 
 ```{r}
-library(readr)
+library("readr")
 fd <- fileDef(name = "runif.R",
               content = read_file(fl))
 
@@ -439,11 +433,10 @@ rbx <- Tool(id = "runif",
 #### docopt: a better and formal way to make command line interface
 
 #### Generate reports
-##### Quick report: Spin and Stich
+
+**Quick report: Spin and Stich**
 
 You can use spin/stich from knitr to generate report directly from a Rscript with special format. For example, let's use above example
-
-
 
 ```{r, eval = TRUE, comment=''}
 fl <- system.file("docker/sevenbridges/src", "runif_args.R", package = "sevenbridges")
@@ -459,7 +452,7 @@ Rscript -e "rmarkdown::render(knitr::spin('runif_args.R', FALSE))" --args --n=10
 And so I describe my tool like this with docker image `rocker/hadleyverse` this contians knitr and rmarkdown package.
 
 ```{r}
-library(readr)
+library("readr")
 fd <- fileDef(name = "runif.R",
               content = read_file(fl))
 
@@ -488,13 +481,11 @@ rbx <- Tool(id = "runif",
 ```
 
 
-You will get a report in the end
-
-####
+You will get a report in the end.
 
 #### Misc
 
-##### Inherit metadata and additional metadata
+**Inherit metadata and additional metadata**
 
 Sometimes if you want your output files inherit from particular input file, just 
 use `inheritMetadataFrom` in your output() call and pass the input file id. If 
@@ -518,7 +509,7 @@ out.lst <- list(output(id = "random",
 out.lst
 ```
 
-##### Example with file/files as input node
+**Example with file/files as input node**
 
 ```{r, eval = TRUE, comment=''}
 fl <- system.file("docker/rnaseqGene/rabix", "generator.R", package = "sevenbridges")
@@ -528,27 +519,25 @@ cat(readLines(fl), sep = '\n')
 Note the stageInput example in the above script, you can set it to "copy" or "link".
 
 
-##### Input node batch mode
+**Input node batch mode**
 
-Batch by File
+Batch by File (the long output has been omitted here):
 
-```{r}
+```{r, results = 'hide'}
 f1 = system.file("extdata/app", "flow_star.json", package = "sevenbridges")
 f1 = convert_app(f1)
 f1$set_batch("sjdbGTFfile", type = "ITEM")
 ```
 
-Batch by other critieria such as metadta, following example, is using sample_id and library_id
+Batch by other critieria such as metadta, following example, is using `sample_id` and `library_id` (the long output has been omitted here):
 
-```{r}
+```{r, results = 'hide'}
 f1 = system.file("extdata/app", "flow_star.json", package = "sevenbridges")
 f1 = convert_app(f1)
 f1$set_batch("sjdbGTFfile", c("metadata.sample_id", "metadata.library_id"))
 ```
 
-When you push your app to the platform, you will see the batch available at task page
-or workflow editor. 
-
+When you push your app to the platform, you will see the batch available at task page or workflow editor.
 
 ## Describe Wokrflow in R
 
@@ -618,7 +607,7 @@ Let's create tools from scratch to perform a simple task
 3. Tool 3 do a mean calculation of everything
 
 ```{r}
-library(sevenbridges)
+library("sevenbridges")
 ## A tool that generate a 100 random number
 t1 <- Tool(id = "runif new test 3", label = "random number",
            hints = requirements(docker(pull = "rocker/r-base")),
@@ -669,7 +658,7 @@ f = link(t1, t2, "#random", "#number")
 ## you can  not directly copy-paste it
 ## please use API to push it, we will register each tool for you. 
 
-# library(clipr)
+# library("clipr")
 # write_clip(f$toJSON(pretty = TRUE))
 
 
@@ -684,7 +673,7 @@ t2 <- Tool(id = "log new test 3", label = "get log",
                             type = "file", 
                             glob = "*.txt"))
 
-# library(clipr)
+# library("clipr")
 # write_clip(t2$toJSON(pretty = TRUE))
 ```
 
@@ -728,7 +717,7 @@ f2 = link(t1, t2, "output_fastq_files", "reads",
           flow_input = "#SBG_Unpack_FASTQs.input_archive_file",
           flow_output = "#STAR.log_files")
 
-# library(clipr)
+# library("clipr")
 # write_clip(f2$toJSON())
 ```
 
@@ -753,7 +742,7 @@ f4 = link(f2, t1, c("#Picard_SortSam.sorted_bam", "#SBG_FASTQ_Quality_Detector.r
 ## all outputs
 ## flow + flow
 ## print message when name wrong
-# library(clipr)
+# library("clipr")
 # write_clip(f4$toJSON())
 ```
 
@@ -806,12 +795,14 @@ docker exec bunny bash -c 'cd /opt/bunny && ./rabix.sh -e /bunny_data /bunny_dat
 
 You'll see running logs from within container, and also output dir inside <data_dir> in home system.
 
-NOTE: tengfei/testenv has R, python, Java... so many tools can work without docker requirement set. If you however set docker requirement you need to pull image inside container first to run docker container inside running bunny docker.  
-NOTE: inputs.json can also be inputs.yaml if you find it easier to declare inputs in YAML.
+NOTE 1: tengfei/testenv has R, python, Java... so many tools can work without docker requirement set. If you however set docker requirement you need to pull image inside container first to run docker container inside running bunny docker.
 
-**2. from R**  
+NOTE 2: inputs.json can also be inputs.yaml if you find it easier to declare inputs in YAML.
+
+**2. from R**
+
 ```{r, eval=F}
-library(sevenbridges)
+library("sevenbridges")
 
 in.df <- data.frame(id = c("number", "min", "max", "seed"),
                     description = c("number of observation", 
@@ -833,14 +824,8 @@ rbx <- Tool(id = "runif",
             baseCommand = "runif.R",
             inputs = in.df, ## or ins.df
             outputs = out.df)
-params <- list(number=3, max=5)
+params <- list(number = 3, max = 5)
 
 set_test_env("tengfei/testenv", "mount_dir")
 test_tool(rbx, params)
 ```
-
-
-
-
-
-

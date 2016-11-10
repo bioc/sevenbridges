@@ -1,22 +1,18 @@
 ---
 title: "Master Tutorial: use R for Cancer Genomics Cloud"
 output:
-  BiocStyle::html_document:
+  rmarkdown::html_vignette:
     toc: true
     toc_depth: 4
     number_sections: false
-    highlight: haddock
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{Master Tutorial: use R for Cancer Genomics Cloud}
 ---
-
-<!--
-%\VignetteIndexEntry{Master Tutorial: use R for Cancer Genomics Cloud}
-%\VignettePackage{sevenbridges}
-%\VignetteEngine{knitr::rmarkdown}
--->
 
 ```{r include=FALSE}
 knitr::opts_chunk$set(eval = FALSE)
-library(sevenbridges)
+library("sevenbridges")
 ```
 
 ## Introduction
@@ -57,10 +53,9 @@ if(!require("devtools", quietly = TRUE)){
     install.packages("devtools") 
 }
 source("http://bioconductor.org/biocLite.R")
-library(devtools)
-install_github("sbg/sevenbridges-r", build_vignettes=TRUE, 
-  repos=BiocInstaller::biocinstallRepos(),
-  dependencies=TRUE)
+devtools::install_github("sbg/sevenbridges-r", build_vignettes = TRUE,
+                         repos = BiocInstaller::biocinstallRepos(),
+                         dependencies = TRUE)
 ```
 
 After the installation you can always browser vignette
@@ -79,14 +74,11 @@ You can find login/registration on NCI Cancer Genomics Cloud homepage [http://ww
 
 After you login, you can get your authentication under your account setting and 'developer' tab ([tutorial])(http://docs.cancergenomicscloud.org/docs/get-your-authentication-token)
 
-
-
 ### (optional) register on shinyapps.io
 
 In this tutorial, if you want to try to deploy the application automatically on shiny server like shinyapps.io, please visit [http://www.shinyapps.io/](http://www.shinyapps.io/) register and login. 
 
 Get you token and secret ready to deploy
-
 
 ![shiny-token-open](http://shiny.rstudio.com/images/tokens2.png)
 
@@ -115,18 +107,18 @@ The shiny app report with ggvis module on the shinyapps.io server looks like [th
 
 A ggvis interactive scatter plot
 
-![Imgur](http://i.imgur.com/X8M2O0T.png)
+![ggvis](http://i.imgur.com/X8M2O0T.png)
 
 A differential expression table
 
-![Imgur](http://i.imgur.com/wQ9O3Ys.png)
+![de-table](http://i.imgur.com/wQ9O3Ys.png)
 
 A full html report included, it's also output from the first tool, in this way, you can orchestrate many tools output into single report for your task.
 
-![Imgur](http://i.imgur.com/9vgBQQC.png)
-![Imgur](http://i.imgur.com/l5Xgq9R.png)
+![html-report](http://i.imgur.com/9vgBQQC.png)
+![heatmap](http://i.imgur.com/l5Xgq9R.png)
 
-Now let's start building tools
+Now let's start building tools.
 
 ### Create a project on your account via API R client
 
@@ -201,7 +193,7 @@ Now let's create a new project called "hackathon", save it to a 'p' object for c
 
 Now check it on CGC, you will see a fresh new project is created. 
 
-![Imgur](http://i.imgur.com/oI0dXyu.png)
+![cgc-projects](http://i.imgur.com/oI0dXyu.png)
 
 To delete it, just call, but I will suggest you keep it for following tutorial : ) 
 
@@ -401,18 +393,16 @@ Image registry, please read out [tutorial](http://docs.cancergenomicscloud.org/d
 
 Finally it's time to describe your tool in R (cwl format)!
 
-Well, you are always encouraged to use graphical user interface like this
-
-![rabix-ui](https://www.filepicker.io/api/file/lRKPOLKhQE6ctWzWd0Qv)
-
-But it's at the same time fun to learn how to do it in R, so you could script 
-how you build it together, like what I did here, for every single tool json, I have a 
-R script called generator.R in the same folder, so I can always trace back. 
+Well, you are always encouraged to use graphical user interface,
+but it's at the same time fun to learn how to do it in R, so you could script
+how you build it together, like what I did here, for every single tool json,
+I have an R script called generator.R in the same folder, so I can always trace
+back. 
 
 For example, you can see the same in my github page, under [inst/docker](https://github.com/sbg/sevenbridges-r/tree/master/inst/docker), you will see three examples, 1. package docker 2. rna-seq tool 3. report tool, under each folder, you will see 1. one dockerfile, 2. src/ for command line 3. report/ for report template and 4. rabix a generator file and a json.
 
-![Imgur](http://i.imgur.com/Wnf015S.png)
-![Imgur](http://i.imgur.com/OYoa6kq.png)
+![rstudio-dir](http://i.imgur.com/Wnf015S.png)
+![rstudio-file](http://i.imgur.com/OYoa6kq.png)
 
 Tool is the simple basic unit of a workflow, you can put the whole flow in one 
 container and one tool, it of course works, just make it hard to factorize components. 
@@ -562,8 +552,6 @@ p$upload(td)
 
 Copy this list, and then in your project, click "add files", and choose "import from ftp" ([tutorial](http://docs.cancergenomicscloud.org/docs/copy-files-to-a-project))
 
-![add-files](https://www.filepicker.io/api/file/pv6nUh4ORNKDephHGxse)
-
 When it's finished, refresh your file page, you will be able to see all of them. The cool thing is that you can search file by 'name' not by id, it support fuzz pattern match.
 
 ```{r}
@@ -664,7 +652,7 @@ uses two different engines to provide isolated environment to generate report, b
 - packrat engine: isolated libraries
 - liftr engine (in progress): docker in docker
 
-![Imgur](http://i.imgur.com/yPTNpqp.png)
+![report-tool](http://i.imgur.com/yPTNpqp.png)
 
 __Requirement for your report template__
 
@@ -730,11 +718,11 @@ Even though in R with 'sevenbridges' package you can use `%>>%` to connect two T
 
 Now connect your RNA-seq tool with the report tool you just add it to your project, follow the tutorial [here](http://docs.cancergenomicscloud.org/docs/the-pipeline-editor), then make a workflow like this:
 
-![Imgur](http://i.imgur.com/dTKvLdt.png)
+![cgc-workflow](http://i.imgur.com/dTKvLdt.png)
 
 And next run a task on the platform via UI like this:
 
-![Imgur](http://i.imgur.com/6VsC69W.png)
+![rnaseq-runtask](http://i.imgur.com/6VsC69W.png)
 
 ## Exercise: bring your own tool
 
@@ -749,6 +737,4 @@ After you install the package
 browseVignettes("sevenbridges")
 ```
 
-or on Bioconductor devel branch sevenbridges [page](http://bioconductor.org/packages/3.3/bioc/html/sevenbridges.html)
-
-    
+or on Bioconductor devel branch sevenbridges [page](http://bioconductor.org/packages/3.3/bioc/html/sevenbridges.html).

@@ -1,17 +1,19 @@
-#' R Client for Seven Bridges Genomics API
+#' R Client for Seven Bridges Platform API and CWL Tool builder in R
 #'
-#' R Client for Seven Bridges Genomics API
-#'
-#' The vignette can be opened with \code{vignette('sevenbridges')}.
+#' R client and utilities for Seven Bridges platform API, from Cancer
+#' Genomics Cloud to other Seven Bridges supported platforms.
 #'
 #' \tabular{ll}{ Package: \tab sevenbridges\cr Type: \tab Package\cr
-#' License: \tab MIT\cr }
+#' License: \tab Apache License 2.0\cr }
 #'
 #' @name sevenbridges-package
 #' @docType package
-#' @author Tengfei Yin <\email{tengfei.yin@@sbgenomics.com}>
+#' @author Nan Xiao <\email{nan.xiao@@sbgenomics.com}>
 #'         Dusan Randjelovic <\email{dusan.randjelovic@sbgenomics.com}>
-#'         Nan Xiao <\email{nan.xiao@@sbgenomics.com}>
+#'         Emile Young <\email{emile.young@sbgenomics.com}>
+#'         Tengfei Yin <\email{tengfei.yin@@sbgenomics.com}>
+#'
+#'
 #' @import httr methods
 #' @importFrom dplyr bind_rows
 #' @importFrom utils modifyList
@@ -26,7 +28,6 @@
 #' @importFrom S4Vectors elementType endoapply
 #' @importClassesFrom objectProperties SingleEnum Enum
 #' @importFrom objectProperties setSingleEnum
+#' @importFrom miniUI miniPage gadgetTitleBar miniContentPanel
+#' @importFrom shiny textInput uiOutput fluidRow div
 NULL
-
-
-

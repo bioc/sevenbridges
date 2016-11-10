@@ -4,5 +4,8 @@
 ^\.travis\.yml$
 ^.*~$
 hooks
-
-
+^logo\.png$
+^docs$
+^_pkgdown\.yml$
+^_NEWS\.md$
+^appveyor\.yml$
