@@ -1,10 +1,28 @@
+# sevenbridges 1.5.5 (TBD)
+
+## Improvements
+
+- Redesigned authentication process: compliant with the new specification
+
+# sevenbridges 1.5.4
+
+## Bug Fixes
+
+- Big fix for batch mode: ([b6a91f2](https://github.com/sbg/sevenbridges-r/commit/b6a91f2fbbb59cbe6dc40b63f6b7057064e25c19))
+- Bug fix in IDE Dockerfile ([838856b](https://github.com/sbg/sevenbridges-r/commit/838856bd1dfb4ea8bc143f246a152deda3c76d92))
+
+## Improvements
+
+- Decoupled Files class and (CWL) File class; updated Files class to support the latest API
+- Updated error status code to the latest version
+
 # sevenbridges 1.5.3
 
 ## Bug Fixes
 
-- Fixed build error under Windows caused by unexpected UTF-8 characters ([c6c4245](https://github.com/sbg/sevenbridges-r/commit/b03ed45d5c9495196df311b58a2e275b3f2ea44a))
-- Added essential dependencies, such as `miniUI`, `shiny`, and `rstudioapi` to be ready for RStudio addins
+- Fixed build error under Windows caused by unexpected UTF-8 characters ([b03ed45](https://github.com/sbg/sevenbridges-r/commit/b03ed45d5c9495196df311b58a2e275b3f2ea44a))
 - Removed BiocStyle to avoid naming scheme conflicts
+- Added essential dependencies, such as `miniUI`, `shiny`, and `rstudioapi` to be ready for RStudio addins
 - Fixed batch mode input checking. Thanks: Fabian Zimmer
 
 ## Improvements
