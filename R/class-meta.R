@@ -1,23 +1,20 @@
-## TODO: set single ENUM automatically
+# TODO: set single ENUM automatically
 
-## Meta shema v2
-## I use all lower case for field
-## courtercy to SBG team, the python code
+# Meta Schema v2
+# I use all lower case for field
+# courtesy to SBG team, the Python code
 uuid_regex = c('^$|[0-9a-f]{8}-',
                '[0-9a-f]{4}-',
                '[1-5][0-9a-f]{3}-',
                '[89ab][0-9a-f]{3}-',
                '[0-9a-f]{12}')
 
-max_length = function(n) {
-    return(paste0("^.{0,", as.character(n),"}$"))
-}
+max_length = function(n) paste0("^.{0,", as.character(n),"}$")
 
-max_chars = 128
+max_chars = 128L
 
-regErrFun = function(x, max = max_chars) {
+regErrFun = function(x, max = max_chars)
     sprintf(paste(x,"can contain maximum %d characters"), max)
-}
 
 regErrFun("asdf")
 
@@ -27,14 +24,14 @@ metadata_groups_order <- list(
              "paired_end", "data_format", "file_extension",
              "reference_genome", "data_type", "data_subtype",
              "analysis_uuid", "gdc_file_uuid", "access_level"),
-    General = "investigation",
-    Case = c("case_id", "case_uuid"),
+    General          = c("investigation"),
+    Case             = c("case_id", "case_uuid"),
     Case_Demographic = c("gender", "race", "ethnicity"),
-    Case_Diagnosis = c("primary_site", "disease_type", "age_at_diagnosis"),
-    Case_Status = "vital_status",
-    Case_Prognosis = c("days_to_death"),
-    Sample = c("sample_id", "sample_uuid", "sample_type"),
-    Aliquot = c("aliquot_id", "aliquot_uuid")
+    Case_Diagnosis   = c("primary_site", "disease_type", "age_at_diagnosis"),
+    Case_Status      = c("vital_status"),
+    Case_Prognosis   = c("days_to_death"),
+    Sample           = c("sample_id", "sample_uuid", "sample_type"),
+    Aliquot          = c("aliquot_id", "aliquot_uuid")
 )
 
 find_meta_group <- function(meta) {
@@ -67,6 +64,7 @@ Meta <- setRefClass("Meta",
                         regexErrMsg      = "characterORNULL"),
 
                     methods = list(
+
                         initialize = function(
                             data             = NA_character_,
                             name             = NULL,
@@ -97,9 +95,11 @@ Meta <- setRefClass("Meta",
                         transformData = function(x) {
                             x
                         },
-                        # asList = function(){
+
+                        # asList = function() {
                         #
                         # },
+
                         show = function(short = FALSE, full = TRUE) {
                             if (short) {
                                 .nms <- "data"
@@ -583,7 +583,7 @@ experimental_strategy <- setMetaClass(
         "Gene Expression Array",
         "miRNA Expression Array",
         "Protein Expression Array",
-        "MSI- Mono- Dinucleotide Assa"))
+        "MSI-Mono-Dinucleotide Assay"))
 
 data_type <- setMetaClass(
     "data_type",
@@ -735,7 +735,7 @@ access_level <- setMetaClass(
     description  =  "Controlled data is the data from the public datasets \
     that has limitations on use and requires approval by \
     a data access committee or similar. Open data is data \
-    from the public datasets that doesn't have \
+    from the public datasets that do not have \
     limitations on use.",
     suggested_values = c(NA_character_, "Controlled", "Open"),
     locked = FALSE)
@@ -774,19 +774,19 @@ lst <- as.list(nm.cls)
 #' @export age_at_diagnosis vital_status days_to_death sample_id
 #' @export sample_uuid sample_type aliquot_id aliquot_uuid
 #' @examples
-#' ## show schema (you can still provide customized one)
-#' ## empty beause they are all NULL
+#' # show schema (you can still provide customized one)
+#' # empty beause they are all NULL
 #' Metadata()
-#' ## show schema
+#' # show schema
 #' Metadata()$show(TRUE)
-#' ## or
+#' # or
 #' names(Metadata()$asList(TRUE))
-#' ## returned meta field is actually define as function too, direclty
-#' ## call them will give you details
+#' # returned meta field is actually define as function too, direclty
+#' # call them will give you details
 #' platform()
 #' paired_end()
 #' quality_scale()
-#' ## check their suggested value and construct your metadata
+#' # check their suggested value and construct your metadata
 #' Metadata(platform  = "Affymetrix SNP Array 6.0", paired_end = 1, quality_scale = "sanger")
 Metadata <- setRefClass("Metadata",
                         fields = c(lst, list(extra = "listORNULL")),
@@ -839,26 +839,27 @@ Metadata <- setRefClass("Metadata",
                             },
 
                             asList = function(full = FALSE) {
+
                                 lst <- .getFields(.self, key_order)
 
                                 res <- c(lst, extra)
 
-                                res <- lapply(res, function(x){
-                                    if(is(x, "Meta")){
+                                res <- lapply(res, function(x) {
+                                    if (is(x, "Meta")) {
                                         x$data
-                                    }else{
+                                    } else {
                                         x
                                     }
                                 })
-                                if(!full){
+                                if (!full) {
                                     idx <- sapply(res, is.null)
-                                    if(length(!idx)){
+                                    if (length(!idx)) {
                                         res[!idx]
-                                    }else{
+                                    } else {
                                         list()
                                     }
 
-                                }else{
+                                } else {
                                     res
                                 }
 
@@ -873,7 +874,7 @@ Metadata <- setRefClass("Metadata",
 setClassUnion("MetadataORNULL", c("Metadata", "NULL"))
 
 normalizeMeta <- function(x) {
-    ## normalize it
+    # normalize it
     if (is.list(x)) {
         if (length(x) > 1) {
             res <- do.call(Metadata, x)
