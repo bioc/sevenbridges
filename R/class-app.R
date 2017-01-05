@@ -141,7 +141,7 @@ App <- setRefClass("App", contains = "Item",
                            message("done")
                        },
 
-                       input_check = function(input, batch = NULL) {
+                       input_check = function(input, batch = NULL, proj = NULL) {
 
                            message("check id match")
                            in_type = input_type()
@@ -159,6 +159,55 @@ App <- setRefClass("App", contains = "Item",
                            id.fl  = which("File" == .type)
                            id.fls = which("File..." == .type)
 
+                           # convert string (id or names) first!
+                           # Based on: is a string a valid file id or not
+                           is_file_id = function(x){
+                               nchar(x) == 24 && !grepl("[^0-9a-fA-F]", x)
+                           }
+
+                           # convert a string to Files/FilesList
+                           # p: Project
+                           as_files = function(p, x){
+                               if(!all(sapply(x, is.character))){
+                                   stop("please provide file id(s)")
+                               }
+
+                               res = lapply(x, function(f){
+                                   if(is_file_id(f)){
+                                       r = p$file(id = f)
+                                       if(is.null(r)){
+                                           stop(paste("id doesn't exists: ", f))
+                                       }else{
+                                           message("file id: ", f)
+                                       }
+                                       r
+                                   }else{
+                                       r = p$file(name = f, exact = TRUE)
+                                       if(is.null(r)){
+                                           stop(paste("name doesn't exists: ", f))
+                                       }else{
+                                           message("file name: ", f)
+                                       }
+                                       r
+                                   }
+
+                               })
+
+                               if(length(x) == 1){
+                                   res[[1]]
+                               }else{
+                                   do.call(FilesList, res)
+                               }
+                           }
+
+                           for(i in c(id.fl, id.fls)){
+                               if(is.character(input[[i]])){
+                                   input[[i]]  = as_files(proj, input[[i]])
+                               }
+                           }
+
+
+                           # solve edge cases
                            if (length(id.fl)) {
                                # solve edge case
                                for (i in id.fl) {
@@ -357,7 +406,18 @@ convert_app <- function(from) {
     }
 
     nms      <- names(obj)
-    .obj.nms <- setdiff(nms, .diy)
+
+    ## Extra fields not defined
+    ## drop them with warning
+    .obj.def <- names(Tool$fields())
+    .obj.extra <- setdiff(nms, .obj.def)
+    if(length(.obj.extra)){
+        warning("Extra fields dropped before conversion: ",
+                paste(.obj.extra, collapse = " "))
+    }
+
+    .obj.nms <- setdiff(nms, c(.diy, .obj.extra))
+
     res      <- do.call("Tool", obj[.obj.nms])
     res$field("inputs", res.in)
     res$field("outputs", res.out)
@@ -448,7 +508,18 @@ convert_app <- function(from) {
     # }
 
     nms <- names(obj)
-    .obj.nms <- setdiff(nms, .diy)
+
+    ## Extra fields not defined
+    ## drop them with warning
+    .obj.def <- names(SBGWorkflow$fields())
+    .obj.extra <- setdiff(nms, .obj.def)
+    if(length(.obj.extra)){
+        warning("Extra fields dropped before conversion: ",
+                paste(.obj.extra, collapse = " "))
+    }
+
+    .obj.nms <- setdiff(nms, c(.diy, .obj.extra))
+
     res <- do.call("Flow",
                    c(obj[.obj.nms],
                      list(steps   = slst,
