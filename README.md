@@ -18,22 +18,30 @@ The Cancer Genomics Cloud (CGC), powered by Seven Bridges, is also a cloud-based
 
 ## Table of Contents
 
-* [Installation](#installation)
-  * [Bioconductor - Release Version](#bioconductor---release-version)
-  * [Bioconductor - Development Version](#bioconductor---development-version)
-  * [Latest Development Version](#latest-development-version)
-* [Features](#features)
-* [Tutorials](#tutorials)
-* [IDE Docker Image](#ide-docker-image)
-* [FAQ](#faq)
-* [Events](#events)
-* [Contribute](#contribute)
+- [Overview](#overview)
+- [Installation](#installation)
+  - [Bioconductor - Release Version](#bioconductor---release-version)
+  - [Bioconductor - Development Version](#bioconductor---development-version)
+  - [Latest Development Version](#latest-development-version)
+- [Features](#features)
+  - [Flexible Authentication Methods](#flexible-authentication-methods)
+  - [Complete API R Client](#complete-api-r-client)
+  - [Task Monitoring](#task-monitoring)
+  - [Batch Tasks Support](#batch-tasks-support)
+  - [Cross Environment Support](#cross-environment-support)
+  - [Common Workflow Language Tool Interface](#common-workflow-language-tool-interface)
+  - [Utilities for Tool and Flow](#utilities-for-tool-and-flow)
+- [Tutorials](#tutorials)
+- [IDE Docker Image](#ide-docker-image)
+- [FAQ](#faq)
+- [Events](#events)
+- [Contribute](#contribute)
 
 ## Installation
 
 ### Bioconductor - Release Version
 
-This installation is recommended for most users as it is the most stable. The current release of Bioconductor is version 3.3, and it works with __R version 3.3.0__. Users of older R and Bioconductor versions must update their installation to take advantage of new features.
+This installation is recommended for most users as it is the most stable. The current release of Bioconductor is version 3.4, and it works with __R version 3.3.2__. Users of older R and Bioconductor versions should update their installation to take advantage of new features.
 
 If you do not want to update R, please install the sevenbridges package directly from GitHub by following the instructions below.
 
@@ -110,18 +118,50 @@ If you have trouble with `pandoc` and do not want to install it,  set `build_vig
 
 The sevenbridges package includes the following features:
 
+### Flexible Authentication Methods
+
+* Multiple authentication methods support.
+
+Direct authentication:
+
+```r
+# direct authentication
+a <- Auth(token = "your_token", platform = "cgc")
+# or use base url
+a <- Auth(token = "your_token", url = "https://cgc-api.sbgenomics.com/v2")
+```
+
+Authentication via system environment variables:
+
+```r
+sbg_set_env(token = "your_token", url = "https://cgc-api.sbgenomics.com/v2")
+a <- Auth(from = "env")
+```
+
+Authentication via a user configuration file, collect and manage your credentials for multiple accounts across various Seven Bridges environments:
+
+```r
+a <- Auth(from = "file", profile_name = "aws-us-tengfei")
+```
+
+Please check `vignette("api", package = "sevenbridges")` for technical details about all available authentication methods.
+
+### Complete API R Client
+
 * A complete API R client with a user-friendly, object-oriented API with printing and support operations for API requests relating to users, billing, projects, files, apps, and tasks. Short examples are also included, as shown below:
 
 ```r
 # Get a project by pattern-matching its name
-p = a$project("demo")
+p <- a$project("demo")
 # Get a project by its id
-p = a$project(id = "tengfei/demo")
+p <- a$project(id = "tengfei/demo")
 # Delete files from a project
 p$file("sample.tz")$delete()
 # Upload fies from a folder to a project and include file metadata
 p$upload("folder_path", metadata = list(platform = "Illumina"))
 ```
+
+### Task Monitoring
 
 * A task monitoring hook which allows you to add a hook function to specific task statuses as you monitor a task. For example, you can opt to receive an email when the task is completed or specify to download all files produced by the task, as shown below:
 
@@ -131,6 +171,8 @@ setTaskHook("completed", function() {
 })
 tsk$monitor()
 ```
+
+### Batch Tasks Support
 
 * Batch tasks by metadata and by item.
 
@@ -156,16 +198,11 @@ tsk$monitor()
                                  gtffile = gtf.in)))
 ```
 
-* Cross-platform support for Seven Bridges, such as [NCI Cancer Genomics Cloud](https://www.cancergenomicscloud.org/) or [Seven Bridges Platform](https://www.sbgenomics.com/) on either the Google Cloud Platform or Amazon Web Services deploy.
+### Cross Environment Support
 
-* Manage your authentication credentials for various Seven Bridges products, such as the Platform and the Cancer Genomics Cloud, via a configuration file as follows:
+* Cross-platform support for Seven Bridges environments, such as [Cancer Genomics Cloud](https://www.cancergenomicscloud.org/) or [Seven Bridges Platform](https://www.sbgenomics.com/) on either Amazon Web Services or Google Cloud Platform.
 
-```r
-# standard
-a = Auth(token = "fake_token", url = "api_url")
-# OR from config file, multiple platform/user support
-a = Auth(username = "tengfei", platform = "cgc")
-```
+### Common Workflow Language Tool Interface
 
 * A [Common Workflow Language (CWL)](http://www.commonwl.org/) Tool interface to directly describe your tool in R, export it to JSON or YAML, or add it to your online project. This package defines a complete set of CWL object, so you can describe tools as follows:
 
@@ -196,14 +233,16 @@ rbx$toJSON(pretty = TRUE)
 rbx$toYAML()
 ```
 
+### Utilities for Tool and Flow
+
 * Utilities for Tool and Flow, for example
 
 ```r
-# converting a SBG CWL json file
+# converting a SBG CWL JSON file
 library("sevenbridges")
-t1 = system.file("extdata/app", "tool_star.json", package = "sevenbridges")
+t1 <- system.file("extdata/app", "tool_star.json", package = "sevenbridges")
 # convert json file into a Tool object
-t1 = convert_app(t1)
+t1 <- convert_app(t1)
 # shows all input matrix
 t1$input_matrix()
 ```
@@ -226,13 +265,13 @@ We maintain 3 different sets of documentation: the sevenbridges-r GitHub reposit
 In the tutorial for [IDE container](#tutorials) above, we built a Docker container locally from which we can launch RStudio and Shiny. To launch RStudio and Shiny Server with the Seven Bridges IDE Docker container, do the following:
 
 ```shell
-docker run  -d -p 8787:8787 -p 3838:3838 --name rstudio_shiny_server tengfei/sevenbridges
+docker run  -d -p 8787:8787 -p 3838:3838 --name rstudio_shiny_server sevenbridges/sevenbridges-r
 ```
 
 To mount a file system, you need to use `--privileged` with fuse.
 
 ```shell
-docker run  --privileged -d -p 8787:8787 -p 3838:3838 --name rstudio_shiny_server tengfei/sevenbridges
+docker run  --privileged -d -p 8787:8787 -p 3838:3838 --name rstudio_shiny_server sevenbridges/sevenbridges-r
 ```
 
 Check out the IP from Docker Machine if you are on a Mac OS.
@@ -261,7 +300,7 @@ _Note_: Generic Shiny apps can also be hosted at `http://<url>:3838/` or, for a 
 
 The best place to ask questions about the sevenbridges package is the [mailing list](https://groups.google.com/forum/#!forum/sevenbridges-r).
 
-- __Q__: Does this package support Seven Bridges' API v1 which was not cwl compatible?<br />
+- __Q__: Does this package support Seven Bridges' API v1 which was not CWL compatible?<br />
   __A__: No. This package only supports API v2 +. For API v1, please check out the [sbgr](https://github.com/road2stat/sbgr) package. Note that API v1 and associated legacy project types will be deprecated.
 
 - __Q__: Which version of the Common Workflow Language (CWL) is supported?<br />
