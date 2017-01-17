@@ -464,13 +464,15 @@ Auth <- setRefClass("Auth", fields = list(from         = "character",
                         api = function(...,
                                        limit = getOption("sevenbridges")$"limit",
                                        offset = getOption("sevenbridges")$"offset",
+                                       fields = NULL,
                                        complete = FALSE) {
 
                             '
                             This call returns all API paths, and pass arguments
                             to api() function and input token and url automatically'
 
-                            req = sevenbridges::api(token, base_url = url, limit = limit, offset = offset, ...)
+                            req = sevenbridges::api(token, base_url = url, limit = limit,
+                                                    offset = offset, fields = fields, ...)
                             req = status_check(req)
 
                             if (complete) {
@@ -484,7 +486,8 @@ Auth <- setRefClass("Auth", fields = list(from         = "character",
                                         .limit = 100
                                         .offset = (i - 1) * 100
                                         req = sevenbridges::api(token, base_url = url,
-                                                                limit = .limit, offset = .offset, ...)
+                                                                limit = .limit, offset = .offset,
+                                                                fields = fields, ...)
                                         req = status_check(req)
                                         res$items = c(res$items, req$items)
                                         setTxtProgressBar(pb, i)
@@ -579,7 +582,9 @@ Auth <- setRefClass("Auth", fields = list(from         = "character",
                             }
 
                             # build query
+
                             .query = list(project = project)
+
                             if (length(metadata)) {
                                 new.meta = unlist(metadata)
                                 names(new.meta) = sapply(names(new.meta),
@@ -590,6 +595,12 @@ Auth <- setRefClass("Auth", fields = list(from         = "character",
                             if (!is.null(origin.task)) {
                                 .query = c(.query, list(origin.task = origin.task))
                             }
+
+                            if(detail){
+                                .query = c(.query, list(fields = "_all"))
+                            }
+
+
 
                             .split_item = function(x, list_name = NULL) {
                                 if (length(x) > 1) {
@@ -611,6 +622,8 @@ Auth <- setRefClass("Auth", fields = list(from         = "character",
                                 .new_tag = lapply(.new_tag, URLencode, TRUE)
                                 .query = c(.query, .new_tag)
                             }
+
+
 
                             if (is.null(name)) {
                                 # if no id, no name, list all
@@ -658,20 +671,7 @@ Auth <- setRefClass("Auth", fields = list(from         = "character",
                                        res = m.match(res, id = id, name = name, exact = exact)
                                    })
 
-                            if (length(res)) {
-                                if (detail) {
-                                    if (is(res, "FilesList")) {
-                                        ids = sapply(res, function(x){ x$id })
-                                    } else {
-                                        ids = res$id
-                                    }
-                                    lst = lapply(ids, function(id) {
-                                        req = api(path = paste0("files/", id), method = "GET", ...)
-                                        .asFiles(req)
-                                    })
-                                    res = FilesList(lst)
-                                }
-                            } else {
+                            if (!length(res)) {
                                 return(NULL)
                             }
                             res = setAuth(res, .self, "Files")
