@@ -258,9 +258,15 @@ setMethod("asList", "DSCList", function(object, ...){
                     r <- x
                 }
             } else if (is(x, "ItemArray")) {
-                r <- list(items = as.character(x$items),
-                          type = as.character(x$type))
-            } else if(is(x, "enum")) {
+                if (is(x$items, "enum")) {
+                    r <- list(type = as.character(x$type),
+                              items = x$items$toList())
+                } else {
+                    r <- list(items = as.character(x$items),
+                              type = as.character(x$type))
+                }
+
+            } else if (is(x, "enum")) {
                 r <- list(name = as.character(x$name),
                           symbols = as.character(x$symbols),
                           type = as.character(x$type))
@@ -394,25 +400,6 @@ ComplexEnum <- setSingleEnum("Complex" , levels = .CWL.Complex)
 DatatypeEnum <- setSingleEnum("Datatype",
                               levels = c(.CWL.Primitive, .CWL.Complex, "File"))
 
-#' @rdname Enum
-#' @aliases ItemArray
-#' @export ItemArray
-#' @exportClass ItemArray
-ItemArray <- setRefClass("ItemArray", contains = "CWL",
-                         fields = list(
-                             items = "DatatypeSingleEnum",
-                             name  = "characterORNULL",
-                             type  = "character"),
-                         methods = list(
-                             initialize = function(
-                                 items = "",
-                                 name  = NULL,
-                                 type  = "array") {
-                                 type  <<- type
-                                 name  <<- name
-                                 items <<- DatatypeEnum(deType(items))
-                             }
-                         ))
 
 #' @rdname Enum
 #' @aliases enum
@@ -439,6 +426,35 @@ enum <- setRefClass("enum", contains = "CWL",
                             type <<- type
                         }
                     ))
+
+setClassUnion("DatatypeSingleEnumORenum", c("DatatypeSingleEnum", "enum"))
+
+#' @rdname Enum
+#' @aliases ItemArray
+#' @export ItemArray
+#' @exportClass ItemArray
+ItemArray <- setRefClass("ItemArray", contains = "CWL",
+                         fields = list(
+                             items = "DatatypeSingleEnumORenum",
+                             name  = "characterORNULL",
+                             type  = "character"),
+                         methods = list(
+                             initialize = function(
+                                 items = "",
+                                 name  = NULL,
+                                 type  = "array") {
+
+                                 type  <<- type
+                                 name  <<- name
+
+                                 if ("type" %in% names(items) && items$type == "enum") {
+                                     items <<- do.call(enum, items)
+                                 } else {
+                                     items <<- DatatypeEnum(deType(items))
+                                 }
+
+                             }
+                         ))
 
 # TODO: singleEnum <> Enum
 setClassUnion("DSC", c("DatatypeSingleEnum", "Schema", "character", "ItemArray", "enum"))
@@ -715,8 +731,25 @@ SubworkflowFeatureRequirement <-
 #' @rdname ProcessRequirement
 FileDef <- setRefClass("FileDef",
                        fields = list(
-                           filename    = "characterORExpression",
-                           fileContent = "characterORExpression"
+                           filename    = "characterORExpressionORNULL",
+                           fileContent = "characterORExpressionORNULL"
+                       ),
+                       methods = list(
+                           initialize = function(filename = NULL, fileContent = NULL){
+
+                               if (is.list(filename)) {
+                                   filename <<- do.call(Expression, filename)
+                               } else {
+                                   filename <<- filename
+                               }
+
+
+                               if (is.list(fileContent)) {
+                                   fileContent <<- do.call(Expression, fileContent)
+                               } else {
+                                   fileContent <<- fileContent
+                               }
+                           }
                        ))
 
 #' @export FileDefList
@@ -1636,7 +1669,7 @@ CommandInputSchema <-
 CommandOutputBinding <-
     setRefClass("CommandOutputBinding", contains = "Binding",
                 fields = list(
-                    glob       = "characterORExpression",
+                    glob       = "characterORExpressionORNULL",
                     outputEval = "ExpressionORNULL"
                 ))
 
@@ -1863,13 +1896,15 @@ SBGWorkflowOutputParameter <- setRefClass("SBGWorkflowOutputParameter",
                                               "sbg:x"              = "numericORNULL",
                                               "sbg:y"              = "numericORNULL",
                                               "sbg:includeInPorts" = "logicalORNULL",
-                                              "required"           = "logicalORNULL"
+                                              "required"           = "logicalORNULL",
+                                              "sbg:fileTypes"      = "characterORNULL"
                                           ),
                                           methods = list(
                                               initialize = function(
                                                   x = NULL, y = NULL,
                                                   includeInPorts = TRUE,
-                                                  required = FALSE, ...) {
+                                                  required = FALSE,
+                                                  fileTypes = NULL, ...) {
                                                   args <- mget(names(formals()),
                                                                sys.frame(sys.nframe()))
                                                   nms <- c("x", "y", "includeInPorts")
@@ -2238,6 +2273,7 @@ SBGInputParameter <- setRefClass(
                   "sbg:includeInPorts"   = "logicalORNULL",
                   "sbg:toolDefaultValue" = "characterORNULL",
                   "sbg:altPrefix"        = "characterORNULL",
+                  "sbg:suggestedValue"   = "listORNULL",
                   "required"             = "logicalORNULL",
                   "batchType"            = "characterORNULL"),
     methods = list(
@@ -2249,6 +2285,7 @@ SBGInputParameter <- setRefClass(
                               includeInPorts   = NULL,
                               toolDefaultValue = NULL,
                               altPrefix        = NULL,
+                              suggestedValue   = NULL,
                               required         = FALSE,
                               batchType        = NULL, ...) {
 
@@ -2266,13 +2303,14 @@ SBGInputParameter <- setRefClass(
             .self$field("sbg:includeInPorts", includeInPorts)
             .self$field("sbg:toolDefaultValue", toolDefaultValue)
             .self$field("sbg:altPrefix", altPrefix)
+            .self$field("sbg:suggestedValue", suggestedValue)
             .self$field("batchType", batchType)
             .self$field("required", required)
             callSuper(...)
 
         }))
 
-is_required = function(x) {
+.is_required = function(x) {
     # x is input item
     !(is.character(x$type[[1]]) && x$type[[1]] == "null")
 }
@@ -2304,6 +2342,7 @@ input <- function(id = NULL, type = NULL, label = "",
                 ib <- do.call(SCLB, o.b)
             }
 
+
             o <- c(o[!names(o) %in% c("inputBinding",
                                       "sbg:category",
                                       "required",
@@ -2312,7 +2351,7 @@ input <- function(id = NULL, type = NULL, label = "",
                                       "fileTypes",
                                       "sbg:stageInput")],
                    list(inputBinding = ib,
-                        required     = is_required(o),
+                        required     = .is_required(o),
                         type         = format_type(o$type),
                         category     = o[["sbg:category"]],
                         fileTypes    = o[["sbg:fileTypes"]],
@@ -2413,11 +2452,16 @@ output <- function(id = NULL, type = "file", label = "",
 
             o.b <- o$outputBinding
             # glob
-            if (length(o.b$glob) == 1 && is.character(o.b$glob)) {
-                res.glob <- o.b$glob
+            if (length(o.b$glob)) {
+                if (length(o.b$glob) == 1 && is.character(o.b$glob)) {
+                    res.glob <- o.b$glob
+                } else {
+                    res.glob <- do.call("Expression", o.b$glob)
+                }
             } else {
-                res.glob <- do.call("Expression", o.b$glob)
+                res.glob <- NULL
             }
+
             # load Contents
             if (length(o.b$loadContents)) {
                 res.load <- o.b$loadContetns
@@ -2785,15 +2829,15 @@ setAs("SBGInputParameter", "data.frame", function(from) {
                                     "sbg:stageInput")],
              list(
                  # inputBinding = ib,
-                 required   = is_required(lst),
-                 type       = make_type(lst$type),
+                 required   = .is_required(lst),
+                 type       = .make_type(lst$type),
                  category   = lst[["sbg:category"]],
                  fileTypes  = lst[["sbg:fileTypes"]],
                  stageInput = lst[["sbg:stageInput"]]),
              ib)
 
     res = lapply(res, function(x) {
-        if(is.null(x))
+        if (is.null(x))
             return("null")
         else
             return(x)
@@ -2865,7 +2909,7 @@ setAs("SBGCommandOutputParameter", "data.frame", function(from) {
                                     "fileTypes",
                                     "sbg:inheritMetadataFrom",
                                     "sbg:metadata")],
-             list(type = make_type(lst$type),
+             list(type = .make_type(lst$type),
 
                   fileTypes = lst[["sbg:fileTypes"]]), ob)
 
@@ -2910,7 +2954,7 @@ setAs("SBGWorkflowOutputParameter", "data.frame", function(from) {
                                     "fileTypes",
                                     "sbg:inheritMetadataFrom",
                                     "sbg:metadata")],
-             list(type = make_type(lst$type),
+             list(type = .make_type(lst$type),
 
                   fileTypes = lst[["sbg:fileTypes"]]))
 
@@ -2947,3 +2991,6 @@ setAs("SBGWorkflowOutputParameterList", "data.frame", function(from) {
     rbind(res1, res2)
 
 })
+
+
+

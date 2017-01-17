@@ -24,6 +24,7 @@
                 "sbg:toolkit",
                 "sbg:projectId",
                 "sbg:image_url",
+                "appUrl",
                 "x")
 
 .sbg.fld <- gsub("sbg:", "", .sbg.items)
@@ -31,58 +32,66 @@
 SBG <- setRefClass("SBG", contains  = "CWL",
 
                    fields = list(
-                       "sbg:homepage"         = "characterORNULL",
-                       "sbg:validationErrors" = "listORNULL",
-                       "sbg:sbgMaintained"    = "logicalORNULL",
-                       "sbg:latestRevision"   = "integerORNULL",
-                       "sbg:job"              = "listORNULL",
-                       "sbg:toolAuthor"       = "characterORNULL",
-                       "sbg:copyOf"           = "characterORNULL",
-                       "sbg:createdOn"        = "integerORNULL",
-                       "sbg:categories"       = "characterORlistORNULL",
-                       "sbg:contributors"     = "listORNULL",
-                       "sbg:links"            = "listORNULL",
-                       "sbg:project"          = "characterORNULL",
-                       "sbg:projectId"        = "characterORNULL",
-                       "sbg:createdBy"        = "characterORNULL",
-                       "sbg:toolkitVersion"   = "characterORNULL",
-                       "sbg:id"               = "characterORNULL",
-                       "sbg:license"          = "characterORNULL",
-                       "sbg:revision"         = "integerORNULL",
-                       "sbg:revisionNotes"    = "characterORNULL",
-                       "sbg:cmdPreview"       = "characterORNULL",
-                       "sbg:modifiedOn"       = "integerORNULL",
-                       "sbg:modifiedBy"       = "characterORNULL",
-                       "sbg:revisionsInfo"    = "listORNULL",
-                       "sbg:toolkit"          = "characterORNULL",
-                       "sbg:image_url"        = "characterORNULL"),
+                       "sbg:homepage"            = "characterORNULL",
+                       "sbg:validationErrors"    = "listORNULL",
+                       "sbg:sbgMaintained"       = "logicalORNULL",
+                       "sbg:latestRevision"      = "integerORNULL",
+                       "sbg:job"                 = "listORNULL",
+                       "sbg:toolAuthor"          = "characterORNULL",
+                       "sbg:copyOf"              = "characterORNULL",
+                       "sbg:createdOn"           = "integerORNULL",
+                       "sbg:categories"          = "characterORlistORNULL",
+                       "sbg:contributors"        = "listORNULL",
+                       "sbg:links"               = "listORNULL",
+                       "sbg:project"             = "characterORNULL",
+                       "sbg:projectId"           = "characterORNULL",
+                       "sbg:createdBy"           = "characterORNULL",
+                       "sbg:toolkitVersion"      = "characterORNULL",
+                       "sbg:id"                  = "characterORNULL",
+                       "sbg:license"             = "characterORNULL",
+                       "sbg:revision"            = "integerORNULL",
+                       "sbg:revisionNotes"       = "characterORNULL",
+                       "sbg:cmdPreview"          = "characterORNULL",
+                       "sbg:modifiedOn"          = "integerORNULL",
+                       "sbg:modifiedBy"          = "characterORNULL",
+                       "sbg:revisionsInfo"       = "listORNULL",
+                       "sbg:toolkit"             = "characterORNULL",
+                       "sbg:image_url"           = "characterORNULL",
+                       "sbg:updateRevisionNotes" = "characterORNULL",
+                       "sbg:updateModifiedBy"    = "characterORNULL",
+                       "sbg:update"              = "characterORNULL"
+                   ),
 
                    methods = list(
 
                        initialize = function(
-                           homepage         = NULL,
-                           validationErrors = NULL,
-                           sbgMaintained    = NULL,
-                           latestRevision   = NULL,
-                           job              = NULL,
-                           toolAuthor       = NULL,
-                           copyOf           = NULL,
-                           createdOn        = NULL,
-                           categories       = NULL,
-                           contributors     = NULL,
-                           links            = NULL,
-                           project          = NULL,
-                           createdBy        = NULL,
-                           toolkitVersion   = NULL,
-                           id               = NULL,
-                           license          = NULL,
-                           revision         = NULL,
-                           cmdPreview       = NULL,
-                           modifiedOn       = NULL,
-                           modifiedBy       = NULL,
-                           revisionsInfo    = NULL,
-                           toolkit          = NULL,
-                           revisionNotes    = NULL, ...) {
+                           homepage           = NULL,
+                           validationErrors   = NULL,
+                           sbgMaintained      = NULL,
+                           latestRevision     = NULL,
+                           job                = NULL,
+                           toolAuthor         = NULL,
+                           copyOf             = NULL,
+                           createdOn          = NULL,
+                           categories         = NULL,
+                           contributors       = NULL,
+                           links              = NULL,
+                           project            = NULL,
+                           createdBy          = NULL,
+                           toolkitVersion     = NULL,
+                           id                 = NULL,
+                           license            = NULL,
+                           revision           = NULL,
+                           cmdPreview         = NULL,
+                           modifiedOn         = NULL,
+                           modifiedBy         = NULL,
+                           revisionsInfo      = NULL,
+                           toolkit            = NULL,
+                           revisionNotes      = NULL,
+                           updateRevisionNote = NULL,
+                           updateModifiedBy   = NULL,
+                           update             = NULL,
+                           ...) {
 
                            args <- mget(names(formals()),sys.frame(sys.nframe()))
                            nms <- names(args)
@@ -101,7 +110,7 @@ SBG <- setRefClass("SBG", contains  = "CWL",
 #' \code{Tool} object into a text JSON/YAML file.
 #'
 #' @field context [character] by default:
-#' "https://github.com/common-workflow-language/common-workflow-language/blob/draft-1/specification/tool-description.md"
+#' \url{http://www.commonwl.org/draft-2/}
 #' @field owner [list] a list of owner names.
 #' @field contributor [list] a list of contributor names.
 #'
@@ -349,7 +358,7 @@ Tool <- setRefClass("Tool", contains = c("CommandLineTool", "SBG"),
                             res = sapply(.inputs, function(i) {
                                 if (full) {
                                     res = paste0(tool.name, ".", de_sharp(i$id))
-                                    names(res) = make_type(i$toList()$type)
+                                    names(res) = .make_type(i$toList()$type)
                                     res
                                 } else {
                                     res = i$id
@@ -368,7 +377,7 @@ Tool <- setRefClass("Tool", contains = c("CommandLineTool", "SBG"),
                             res = sapply(outputs, function(o) {
                                 if (full) {
                                     res = paste0(tool.name, ".", de_sharp(o$id))
-                                    names(res) =  make_type(o$toList()$type)
+                                    names(res) = .make_type(o$toList()$type)
                                     res
                                 } else {
                                     res = o$id
