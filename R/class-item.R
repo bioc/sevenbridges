@@ -11,7 +11,7 @@
 Item <- setRefClass("Item",
 
                     fields = list(response = "ANY",
-                                  href     = "characterORNULL",
+                                  href     = "character_OR_NULL",
                                   auth     = "AuthORNULL")
 )
 

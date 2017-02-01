@@ -324,7 +324,7 @@ Schema <- setRefClass("Schema",  contains = "CWL",
                       fields = list(
                           type    = "DSCList",
                           fields  = "SchemaList",
-                          symbols = "characterORNULL",
+                          symbols = "character_OR_NULL",
                           items   = "ANY",
                           values  = "ANY"
                       ),
@@ -352,7 +352,7 @@ Schema <- setRefClass("Schema",  contains = "CWL",
 #' @aliases SchemaDef
 SchemaDef <- setRefClass("SchemaDef", contains = "Schema",
                          fields = list(
-                             name = "characterORNULL"
+                             name = "character_OR_NULL"
                          ))
 
 #----------------------------------------------------------------------
@@ -436,7 +436,7 @@ setClassUnion("DatatypeSingleEnumORenum", c("DatatypeSingleEnum", "enum"))
 ItemArray <- setRefClass("ItemArray", contains = "CWL",
                          fields = list(
                              items = "DatatypeSingleEnumORenum",
-                             name  = "characterORNULL",
+                             name  = "character_OR_NULL",
                              type  = "character"),
                          methods = list(
                              initialize = function(
@@ -510,9 +510,9 @@ FileList <- setListClass("File")
 #' fl
 File <- setRefClass("File", contains = "CWL",
                     fields = list(
-                        class         = "characterORNULL",
-                        path          = "characterORNULL",
-                        checksum      = "characterORNULL",
+                        class         = "character_OR_NULL",
+                        path          = "character_OR_NULL",
+                        checksum      = "character_OR_NULL",
                         size          = "numericORNULL",  # integer has small limit
                         secondaryFile = "FileList"
                     ),
@@ -552,8 +552,8 @@ Expression <- setRefClass("Expression",
                           contains = "CWL",
                           fields = list(
                               engine = "JsonPointerORcharacter",
-                              script = "characterORNULL",
-                              class  = "characterORNULL"
+                              script = "character_OR_NULL",
+                              class  = "character_OR_NULL"
                           ),
                           methods = list(
                               initialize = function(
@@ -665,11 +665,11 @@ ProcessRequirement <- setRefClass("ProcessRequirement",
 DockerRequirement <- setRefClass("DockerRequirement",
                                  contains = "ProcessRequirement",
                                  fields = list(
-                                     dockerPull            = "characterORNULL",
-                                     dockerLoad            = "characterORNULL",
-                                     dockerFile            = "characterORNULL",
-                                     dockerImageId         = "characterORNULL",
-                                     dockerOutputDirectory = "characterORNULL"
+                                     dockerPull            = "character_OR_NULL",
+                                     dockerLoad            = "character_OR_NULL",
+                                     dockerFile            = "character_OR_NULL",
+                                     dockerImageId         = "character_OR_NULL",
+                                     dockerOutputDirectory = "character_OR_NULL"
                                  ),
                                  method = list(
                                      initialize = function(
@@ -808,7 +808,7 @@ CreateFileRequirement <-
 #' @aliases EnvironmentDef
 EnvironmentDef <- setRefClass("EnvironmentDef",
                               fields = list(
-                                  envName  = "characterORNULL",
+                                  envName  = "character_OR_NULL",
                                   envValue = "characterORExpression"
                               ))
 
@@ -910,10 +910,10 @@ ProcessRequirementList <- setListClass("ProcessRequirement")
 ExpressionEngineRequirement <-
     setRefClass("ExpressionEngineRequirement", contains = "ProcessRequirement",
                 fields = list(
-                    id = "characterORNULL",
+                    id = "character_OR_NULL",
                     requirements  = "ProcessRequirementList",
-                    engineCommand = "characterORNULL",
-                    engineConfig  = "characterORNULL"
+                    engineCommand = "character_OR_NULL",
+                    engineConfig  = "character_OR_NULL"
                 ),
                 method = list(
                     initialize = function(
@@ -1049,8 +1049,8 @@ setClassUnion("BindingORNULL", c("Binding", "NULL"))
 Parameter <- setRefClass("Parameter", contains = "CWL",
                          fields = list(
                              type        = "DSCList",
-                             label       = "characterORNULL",
-                             description = "characterORNULL",
+                             label       = "character_OR_NULL",
+                             description = "character_OR_NULL",
                              streamable  = "logical",
                              default     = "ANY"
                          ),
@@ -1155,13 +1155,13 @@ OutputParameterList <- setListClass("OutputParameter")
 #' p
 Process <- setRefClass("Process", contains = "CWL",
                        fields = list(
-                           id           = "characterORNULL",
+                           id           = "character_OR_NULL",
                            inputs       = "InputParameterList",
                            outputs      = "OutputParameterList",
                            requirements = "ProcessRequirementList",
                            hints        = "ProcessRequirementList",
-                           label        = "characterORNULL",
-                           description  = "characterORNULL"
+                           label        = "character_OR_NULL",
+                           description  = "character_OR_NULL"
                        ),
                        methods = list(
                            initialize = function(id = "", ...) {
@@ -1209,7 +1209,7 @@ OutputSchema <- setRefClass("OutputSchema", contains = "Schema")
 #' @aliases InputParameter InputParameter-class
 InputParameter <- setRefClass("InputParameter", contains = "Parameter",
                               fields = list(
-                                  id           = "characterORNULL",
+                                  id           = "character_OR_NULL",
                                   inputBinding = "BindingORNULL"
                               ),
                               methods = list(
@@ -1229,7 +1229,7 @@ InputParameter <- setRefClass("InputParameter", contains = "Parameter",
 #' @aliases OutputParameter OutputParameter-class
 OutputParameter <- setRefClass("OutputParameter", contains = "Parameter",
                                fields = list(
-                                   id = "characterORNULL"
+                                   id = "character_OR_NULL"
                                ),
                                methods = list(
                                    initialize = function(id = "", ...) {
@@ -1333,9 +1333,9 @@ CommandLineBinding <- setRefClass("CommandLineBinding",
                                   fields = list(
                                       position      = "integerORNULL",
                                       # order       = "integerORNULL",  # not exist in CWL specification
-                                      prefix        = "characterORNULL",
+                                      prefix        = "character_OR_NULL",
                                       separate      = "logical",
-                                      itemSeparator = "characterORNULL",
+                                      itemSeparator = "character_OR_NULL",
                                       valueFrom     = "characterORExpressionORNULL"
                                   ),
                                   methods = list(
@@ -1763,8 +1763,8 @@ setClass("LinkMergeMethod", contains = "VIRTUAL")
 #' @return a WorkflowStep object or subclass object.
 WorkflowStepInput <- setRefClass("WorkflowStepInput", contains = "CWL",
                                  fields = list(
-                                     id        = "characterORNULL",
-                                     source    = "characterORNULL", ## fixme:
+                                     id        = "character_OR_NULL",
+                                     source    = "character_OR_NULL", ## fixme:
                                      linkMerge = "LinkMergeMethod",
                                      default   = "ANY"
                                  ),
@@ -1804,7 +1804,7 @@ WorkflowStepInput <- setRefClass("WorkflowStepInput", contains = "CWL",
 #' @aliases WorkflowStepOutput WorkflowStepOutput-class
 WorkflowStepOutput <- setRefClass("WorkflowStepOutput", contains = "CWL",
                                   fields = list(
-                                      id = "characterORNULL"
+                                      id = "character_OR_NULL"
                                   ),
                                   methods = list(
                                       initialize = function(id = "", ...) {
@@ -1864,7 +1864,7 @@ WorkflowStepList <- setListClass("WorkflowStep")
 WorkflowOutputParameter <-
     setRefClass("WorkflowOutputParameter", contains = "OutputParameter",
                 fields = list(
-                    source    = "characterORNULL",
+                    source    = "character_OR_NULL",
                     linkMerge = "LinkMergeMethod"
                 ),
                 methods = list(
@@ -1897,7 +1897,7 @@ SBGWorkflowOutputParameter <- setRefClass("SBGWorkflowOutputParameter",
                                               "sbg:y"              = "numericORNULL",
                                               "sbg:includeInPorts" = "logicalORNULL",
                                               "required"           = "logicalORNULL",
-                                              "sbg:fileTypes"      = "characterORNULL"
+                                              "sbg:fileTypes"      = "character_OR_NULL"
                                           ),
                                           methods = list(
                                               initialize = function(
@@ -2099,15 +2099,15 @@ setClassUnion("CommandLineToolORExpressionToolORWorkflow",
 WorkflowStep <-
     setRefClass("WorkflowStep", contains = "CWL",
                 fields = list(
-                    id            = "characterORNULL",
+                    id            = "character_OR_NULL",
                     inputs        = "WorkflowStepInputList",
                     outputs       = "WorkflowStepOutputList",
                     requirements  = "ProcessRequirement",
                     hints         = "ProcessRequirementList",
-                    label         = "characterORNULL",
-                    description   = "characterORNULL",
+                    label         = "character_OR_NULL",
+                    description   = "character_OR_NULL",
                     run           = "CommandLineToolORExpressionToolORWorkflow",
-                    scatter       = "characterORNULL",
+                    scatter       = "character_OR_NULL",
                     scatterMethod = "ScatterMethod"),
                 methods = list(
                     initialize = function(id = "", scatter = NULL, ...) {
@@ -2266,16 +2266,16 @@ SCLB <- SBGCommandLineBinding <- setRefClass(
 SBGInputParameter <- setRefClass(
     "SBGInputParameter", contains = "InputParameter",
     fields = list("sbg:category"         = "characterORlistORNULL",
-                  "sbg:fileTypes"        = "characterORNULL",
-                  "sbg:stageInput"       = "characterORNULL",
+                  "sbg:fileTypes"        = "character_OR_NULL",
+                  "sbg:stageInput"       = "character_OR_NULL",
                   "sbg:x"                = "numericORNULL",
                   "sbg:y"                = "numericORNULL",
                   "sbg:includeInPorts"   = "logicalORNULL",
-                  "sbg:toolDefaultValue" = "characterORNULL",
-                  "sbg:altPrefix"        = "characterORNULL",
+                  "sbg:toolDefaultValue" = "character_OR_NULL",
+                  "sbg:altPrefix"        = "character_OR_NULL",
                   "sbg:suggestedValue"   = "listORNULL",
                   "required"             = "logicalORNULL",
-                  "batchType"            = "characterORNULL"),
+                  "batchType"            = "character_OR_NULL"),
     methods = list(
         initialize = function(category         = NULL,
                               fileTypes        = NULL,
@@ -2404,7 +2404,7 @@ input <- function(id = NULL, type = NULL, label = "",
 SBGCommandOutputBinding <- setRefClass(
     "SBGCommandOutputBinding", contains = "CommandOutputBinding",
     field = list(
-        "sbg:inheritMetadataFrom" = "characterORNULL",
+        "sbg:inheritMetadataFrom" = "character_OR_NULL",
         "sbg:metadata"            = "listORNULL"
     ),
     methods = list(
@@ -2425,7 +2425,7 @@ SBGCOB <- SBGCommandOutputBinding
 SBGCommandOutputParameter <- setRefClass("SBGCommandOutputParameter",
                                          contains = "CommandOutputParameter",
                                          fields = list(
-                                             "sbg:fileTypes" = "characterORNULL"
+                                             "sbg:fileTypes" = "character_OR_NULL"
                                          ),
                                          methods = list(
                                              initialize = function(fileTypes  = NULL, ...) {
@@ -2765,7 +2765,7 @@ mem <- MemRequirement
 AWSInstanceTypeRequirement <-
     setRefClass("AWSInstanceTypeRequirement", contains = "ProcessRequirement",
                 fields = list(
-                    value = "characterORNULL"
+                    value = "character_OR_NULL"
                 ),
                 methods = list(
                     initialize = function(value = NULL,

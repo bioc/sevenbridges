@@ -29,10 +29,10 @@
 #' app$output_matrix()}
 App <- setRefClass("App", contains = "Item",
 
-                   fields = list(id       = "characterORNULL",
-                                 project  = "characterORNULL",
-                                 name     = "characterORNULL",
-                                 revision = "characterORNULL",
+                   fields = list(id       = "character_OR_NULL",
+                                 project  = "character_OR_NULL",
+                                 name     = "character_OR_NULL",
+                                 revision = "character_OR_NULL",
                                  raw      = "ANY",
                                  raw_obj  = "ANY"),
 

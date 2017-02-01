@@ -54,14 +54,14 @@ Meta <- setRefClass("Meta",
 
                     fields = list(
                         data             = "ANY",
-                        name             = "characterORNULL",
-                        description      = "characterORNULL",
-                        category         = "characterORNULL",
+                        name             = "character_OR_NULL",
+                        description      = "character_OR_NULL",
+                        category         = "character_OR_NULL",
                         locked           = "logicalORNULL",
-                        type             = "characterORNULL",
-                        suggested_values = "characterORNULL",
-                        regex            = "characterORNULL",
-                        regexErrMsg      = "characterORNULL"),
+                        type             = "character_OR_NULL",
+                        suggested_values = "character_OR_NULL",
+                        regex            = "character_OR_NULL",
+                        regexErrMsg      = "character_OR_NULL"),
 
                     methods = list(
 
@@ -145,7 +145,7 @@ setMetaClass <- function(className     = NULL,
 
 file_extension <- setMetaClass(
     "file_extension",
-    type = "characterORNULL",
+    type = "character_OR_NULL",
     name = "File extension",
     description = "Values computationally indicated by the file extension \
     (suffix), which determines the layout for encoding file's data.",
@@ -153,7 +153,7 @@ file_extension <- setMetaClass(
 
 platform <- setMetaClass(
     "platform",
-    type = "characterORNULL",
+    type = "character_OR_NULL",
     name = "Platform",
     description = "The version (manufacturer, model, etc.) of the \
     technology that was used sequencing or assaying. \
@@ -201,7 +201,7 @@ platform <- setMetaClass(
 
 sample_id <- setMetaClass(
     "sample_id",
-    type = "characterORNULL",
+    type = "character_OR_NULL",
     name =  "Sample ID",
     description = "A human readable identifier for a sample or specimen, \
     which could contain some metadata information. A \
@@ -218,7 +218,7 @@ sample_id <- setMetaClass(
 
 library_id <- setMetaClass(
     "library_id",
-    type = "characterORNULL",
+    type = "character_OR_NULL",
     name = "Library ID",
     description = "An identifier for the sequencing library preparation.",
     locked = FALSE,
@@ -228,7 +228,7 @@ library_id <- setMetaClass(
 
 platform_unit_id <- setMetaClass(
     "platform_unit_id",
-    type = "characterORNULL",
+    type = "character_OR_NULL",
     name = "Platform unit ID",
     description = "An identifier for lanes (Illumina), or for slides \
     (SOLiD) in the case that a library was split and \
@@ -281,7 +281,7 @@ quality_scale <- setMetaClass(
 
 investigation <- setMetaClass(
     "investigation",
-    type = "characterORNULL",
+    type = "character_OR_NULL",
     name = "Investigation",
     description = "A value denoting the project or study that generated\
     the data. See NCI Thesaurus Code: C41198.",
@@ -291,7 +291,7 @@ investigation <- setMetaClass(
 
 case_uuid <- setMetaClass(
     "case_uuid",
-    type = "characterORNULL",
+    type = "character_OR_NULL",
     name =  "Case UUID",
     description =  "A unique identifier for the subject who has taken\
     part in the investigation, such as a Universally\
@@ -303,7 +303,7 @@ case_uuid <- setMetaClass(
 
 case_id <- setMetaClass(
     "case_id",
-    type = "characterORNULL",
+    type = "character_OR_NULL",
     name =  "Case ID",
     description = "An identifier, such as a number or a string that may\
     contain metadata information, for a subject who has\
@@ -315,7 +315,7 @@ case_id <- setMetaClass(
 
 primary_site <- setMetaClass(
     "primary_site",
-    type = "characterORNULL",
+    type = "character_OR_NULL",
     name = "Primary site",
     description = "The anatomical site where the primary tumor is\
     located in the organism. See NCI Thesaurus Code:\
@@ -354,7 +354,7 @@ primary_site <- setMetaClass(
 
 disease_type <- setMetaClass(
     "disease_type",
-    type = "characterORNULL",
+    type = "character_OR_NULL",
     name =  "Disease type",
     description =  "The type of the disease or condition studied. \
     See NCI Thesaurus Code: C2991.",
@@ -399,7 +399,7 @@ disease_type <- setMetaClass(
 
 gender <- setMetaClass(
     "gender",
-    type = "characterORNULL",
+    type = "character_OR_NULL",
     name = "Gender",
     description = "The collection of behaviors and attitudes that\
     distinguish people n the basis of the societal roles\
@@ -423,7 +423,7 @@ age_at_diagnosis <- setMetaClass(
 
 vital_status <- setMetaClass(
     "vital_status",
-    type = "characterORNULL",
+    type = "character_OR_NULL",
     name =  "Vital status",
     description =  "The state of being living or deceased for cases that\
     are part of the investigation. See NCI Thesaurus\
@@ -450,7 +450,7 @@ days_to_death <- setMetaClass(
 
 race <- setMetaClass(
     "race",
-    type = "characterORNULL",
+    type = "character_OR_NULL",
     name = "Race",
     description =  "A classification of humans characterized by certain \
     heritable traits, common history, nationality, or \
@@ -471,7 +471,7 @@ race <- setMetaClass(
 
 ethnicity <- setMetaClass(
     "ethnicity",
-    type = "characterORNULL",
+    type = "character_OR_NULL",
     name =  "Ethnicity",
     description = "A socially defined category of people based on \
     common ancestral, cultural, biological, and social \
@@ -487,7 +487,7 @@ ethnicity <- setMetaClass(
 
 sample_uuid <- setMetaClass(
     "sample_uuid",
-    type = "characterORNULL",
+    type = "character_OR_NULL",
     name = "Sample UUID",
     description = "A unique identifier for the sample or specimen used \
     in the investigation, such as a Universally Unique \
@@ -503,7 +503,7 @@ sample_uuid <- setMetaClass(
 
 sample_type <- setMetaClass(
     "sample_type",
-    type = "characterORNULL",
+    type = "character_OR_NULL",
     name = "Sample type",
     description = "The type of material taken from a biological entity \
     for testing, diagnosis, propagation, treatment, or \
@@ -535,7 +535,7 @@ sample_type <- setMetaClass(
 
 aliquot_uuid <- setMetaClass(
     "aliquot_uuid",
-    type = "characterORNULL",
+    type = "character_OR_NULL",
     name =  "Aliquot UUID",
     description = "The unique identifier for an aliquot, such as a \
     Universally Unique Identifier (UUID). The aliquot \
@@ -548,7 +548,7 @@ aliquot_uuid <- setMetaClass(
 
 aliquot_id <- setMetaClass(
     "aliquot_id",
-    type = "characterORNULL",
+    type = "character_OR_NULL",
     name = "Aliquot ID",
     description = "A human readable identifier for an aliquot, which \
     may contain metadata information. The aliquot is a \
@@ -561,7 +561,7 @@ aliquot_id <- setMetaClass(
 
 experimental_strategy <- setMetaClass(
     "experimental_strategy",
-    type = "characterORNULL",
+    type = "character_OR_NULL",
     name = "Experimental strategy",
     description = "The method or protocol used to perform the \
     laboratory analysis. See NCI Thesaurus Code: C43622.",
@@ -587,7 +587,7 @@ experimental_strategy <- setMetaClass(
 
 data_type <- setMetaClass(
     "data_type",
-    type = "characterORNULL",
+    type = "character_OR_NULL",
     name = "Data type",
     description = "The classification of data used in or produced by \
     the analysis, based on its form and content. \
@@ -609,7 +609,7 @@ data_type <- setMetaClass(
 
 data_subtype <- setMetaClass(
     "data_subtype",
-    type = "characterORNULL",
+    type = "character_OR_NULL",
     name = "Data subtype",
     description = "A further, more specific classification of the data \
     type, based on the information that it contains.",
@@ -649,7 +649,7 @@ data_subtype <- setMetaClass(
 
 reference_genome <- setMetaClass(
     "reference_genome",
-    type = "characterORNULL",
+    type = "character_OR_NULL",
     name = "Reference genome",
     description = "The reference assembly (such as HG19 or GRCh37) to \
     which the nucleotide sequence of a case can be \
@@ -675,7 +675,7 @@ reference_genome <- setMetaClass(
 
 analysis_uuid <- setMetaClass(
     "analysis_uuid",
-    type = "characterORNULL",
+    type = "character_OR_NULL",
     name = "Analysis UUID",
     description = "The unique identifier for the analysis that \
     produced the files.",
@@ -685,7 +685,7 @@ analysis_uuid <- setMetaClass(
 
 gdc_file_uuid <- setMetaClass(
     "gdc_file_uuid",
-    type = "characterORNULL",
+    type = "character_OR_NULL",
     name = "GDC file UUID",
     description = "The unique identifier for a file, such as a \
     Universally Unique Identifier (UUID).",
@@ -695,7 +695,7 @@ gdc_file_uuid <- setMetaClass(
 
 data_format <- setMetaClass(
     "data_format",
-    type = "characterORNULL" ,
+    type = "character_OR_NULL" ,
     name  = "Data format",
     description = "Format that determines data content.",
     locked = FALSE,
@@ -870,7 +870,7 @@ formalizeMetaDataFrame = function(x){
     if(length(.i)){
         for(i in .i){
             cls = getRefClass(i)$fields()["type"]
-            if(cls == "characterORNULL"){
+            if(cls == "character_OR_NULL"){
                 message("converting column ", i, " to character")
                 x[,i] = as.character(x[,i])
             }

@@ -51,13 +51,13 @@
 #' # file `~/.sevenbridges/credential` by default
 #' a <- Auth(from = "file")}
 Auth <- setRefClass("Auth", fields = list(from         = "character",
-                                          platform     = "characterORNULL",
+                                          platform     = "character_OR_NULL",
                                           url          = "character",
                                           token        = "character",
-                                          sysenv_url   = "characterORNULL",
-                                          sysenv_token = "characterORNULL",
-                                          config_file  = "characterORNULL",
-                                          profile_name = "characterORNULL",
+                                          sysenv_url   = "character_OR_NULL",
+                                          sysenv_token = "character_OR_NULL",
+                                          config_file  = "character_OR_NULL",
+                                          profile_name = "character_OR_NULL",
                                           fs           = "FSORNULL"),
 
                     methods = list(

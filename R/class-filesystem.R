@@ -15,18 +15,18 @@
 FS <- setRefClass("FS",
 
                   fields = list(
-                      mount_point    = "characterORNULL",
-                      mode           = "characterORNULL",
+                      mount_point    = "character_OR_NULL",
+                      mode           = "character_OR_NULL",
                       debug          = "logicalORNULL",
-                      cache_dir      = "characterORNULL",
-                      cache_size     = "characterORNULL",
-                      api_address    = "characterORNULL",
-                      token          = "characterORNULL",
+                      cache_dir      = "character_OR_NULL",
+                      cache_size     = "character_OR_NULL",
+                      api_address    = "character_OR_NULL",
+                      token          = "character_OR_NULL",
                       project_id     = "listORNULL",
-                      lastproject_id = "characterORNULL",
+                      lastproject_id = "character_OR_NULL",
                       secure         = "logicalORNULL",
-                      server_address = "characterORNULL",
-                      vsfs_jar       = "characterORNULL"),
+                      server_address = "character_OR_NULL",
+                      vsfs_jar       = "character_OR_NULL"),
 
                   methods = list(
 

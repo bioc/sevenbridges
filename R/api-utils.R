@@ -250,7 +250,7 @@ v2Check <- function(version,
 
 # a quick fix for List class
 Item0 <- setClass("Item0",
-                  slots = list(href = "characterORNULL", response = "ANY"))
+                  slots = list(href = "character_OR_NULL", response = "ANY"))
 
 # A function from class-cwl.R
 
