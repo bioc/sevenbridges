@@ -36,9 +36,9 @@ Permission <- setRefClass("Permission", contains = "Item",
 Member <- setRefClass("Member", contains = "Item",
 
                       fields = list(
-                          pid                = "character_OR_NULL",
-                          id                 = "character_OR_NULL",
-                          username           = "character_OR_NULL",
+                          pid                = "characterORNULL",
+                          id                 = "characterORNULL",
+                          username           = "characterORNULL",
                           invitation_pending = "logicalORNULL",
                           permissions        = "Permission"),
 
@@ -124,13 +124,13 @@ MemberList <- setListClass("Member", contains = "Item0")
 # The Project class should support both API v1.1 and API v2
 Project <- setRefClass("Project", contains = "Item",
 
-                       fields = list(id               = "character_OR_NULL",
-                                     name             = "character_OR_NULL",
-                                     billing_group_id = "character_OR_NULL",
-                                     description      = "character_OR_NULL",
-                                     type             = "character_OR_NULL",
+                       fields = list(id               = "characterORNULL",
+                                     name             = "characterORNULL",
+                                     billing_group_id = "characterORNULL",
+                                     description      = "characterORNULL",
+                                     type             = "characterORNULL",
                                      # my_permission  = "Permission",
-                                     owner            = "character_OR_NULL",
+                                     owner            = "characterORNULL",
                                      tags             = "listORNULL"),
 
                        methods = list(

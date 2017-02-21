@@ -1,10 +1,10 @@
 Volume = setRefClass("Volume", contains = "Item",
 
-                     fields = list(id          = "character_OR_NULL",
-                                   name        = "character_OR_NULL",
-                                   description = "character_OR_NULL",
-                                   created_on  = "character_OR_NULL",
-                                   modified_on = "character_OR_NULL",
+                     fields = list(id          = "characterORNULL",
+                                   name        = "characterORNULL",
+                                   description = "characterORNULL",
+                                   created_on  = "characterORNULL",
+                                   modified_on = "characterORNULL",
                                    active      = "logicalORNULL",
                                    service     = "listORNULL",
                                    import_job  = "listORNULL",   # add on

@@ -36,17 +36,17 @@
 #' Files(id = "test_id", name = "test.bam")
 Files <- setRefClass("Files", contains = c("Item"),
 
-                     fields = list(id          = "character_OR_NULL",
-                                   name        = "character_OR_NULL",
+                     fields = list(id          = "characterORNULL",
+                                   name        = "characterORNULL",
                                    size        = "numericORNULL",
-                                   project     = "character_OR_NULL",
-                                   created_on  = "character_OR_NULL",
-                                   modified_on = "character_OR_NULL",
+                                   project     = "characterORNULL",
+                                   created_on  = "characterORNULL",
+                                   modified_on = "characterORNULL",
                                    storage     = "listORNULL",
                                    origin      = "listORNULL",
                                    tags        = "listORNULL",
                                    metadata    = "listORNULL",
-                                   url         = "character_OR_NULL"),
+                                   url         = "characterORNULL"),
 
                      methods = list(
 

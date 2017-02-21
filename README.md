@@ -1,4 +1,4 @@
-# sevenbridges  <a href="http://www.sevenbridges.com"><img src="logo.png" align="right" alt="logo" height="128" width="128" /></a>
+# sevenbridges  <a href="https://www.sevenbridges.com"><img src="logo.png" align="right" alt="logo" height="128" width="128" /></a>
 
 [![Build Status](https://travis-ci.org/sbg/sevenbridges-r.svg?branch=master)](https://travis-ci.org/sbg/sevenbridges-r)
 [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/sbg/sevenbridges-r?branch=master&svg=true)](https://ci.appveyor.com/project/road2stat/sevenbridges-r)
@@ -301,7 +301,7 @@ _Note_: Generic Shiny apps can also be hosted at `http://<url>:3838/` or, for a 
 The best place to ask questions about the sevenbridges package is the [mailing list](https://groups.google.com/forum/#!forum/sevenbridges-r).
 
 - __Q__: Does this package support Seven Bridges' API v1 which was not CWL compatible?<br />
-  __A__: No. This package only supports API v2 +. For API v1, please check out the [sbgr](https://github.com/road2stat/sbgr) package. Note that API v1 and associated legacy project types will be deprecated.
+  __A__: No. This package only supports API v2 +. For API v1, please check out the [sbgr](https://github.com/road2stat/sbgr) package. Note that API v1 and associated legacy project types will be deprecated eventually.
 
 - __Q__: Which version of the Common Workflow Language (CWL) is supported?<br />
   __A__: We support draft 2 and are making progress on supporting draft 3.
@@ -313,13 +313,13 @@ The best place to ask questions about the sevenbridges package is the [mailing l
   __A__: The warning only exists in Rstudio and is potentially a bug in Rstudio. To ignore, it use `options(warn = -1)`
 
 - __Q__: I still have problems despite dismissing the messages.<br />
-  __A__: Please try to use the latest package on GitHub or update your package on Bioconductor. This usually includes the most recent bug fixes.
+  __A__: Please try to use the latest package on GitHub or [update installed Bioconductor packages](https://bioconductor.org/install/#update-bioconductor-packages). This usually includes the most recent bug fixes.
 
 ## Events
 
 | Time              | Event  | Location |
 |:------------------|:-------|:---------|
-| Jan 12, 2017 | [Genomics in the Cloud - Boston Bioconductor Meetup](https://www.meetup.com/Boston-R-Bioconductor-for-genomics/events/235580582/) (talk) | Dana-Farber Cancer Institute, Boston, MA |
+| Jan 12, 2017 | [Genomics in the Cloud - Boston Bioconductor Meetup](https://www.meetup.com/Boston-R-Bioconductor-for-genomics/events/235580582/) (talk) [[slides](https://nanx.me/talks/bioc-meetup-cgc-170112.pdf)] | Dana-Farber Cancer Institute, Boston, MA |
 | Sep 12 - 14, 2016 | [Probabilistic Modeling in Genomics](https://www.stats.ox.ac.uk/events/probgen16) (poster) | University of Oxford, Oxford, UK |
 | May 27 - 29, 2016 | [The 9th China-R Conference](http://china-r.org/bj2016/index.html) (talk) | Renmin University of China, Beijng, China |
 | Jun 27 - 30, 2016 | [The R User Conference 2016](http://user2016.org/) (talk) | Stanford University, Stanford, CA |
@@ -330,6 +330,8 @@ The best place to ask questions about the sevenbridges package is the [mailing l
 
 All feedback is welcome! Please file bug reports/feature requests on the [issue page](https://github.com/sbg/sevenbridges-r/issues), or create pull requests [here](https://github.com/sbg/sevenbridges-r/pulls).
 
+Contributors should read the [Seven Bridges Notice to Contributors](https://drive.google.com/file/d/0B9ms5nmyMyvSY3ZmeDRqV1p4SHc/view?usp=sharing) and sign the [Seven Bridges Contributor Agreement](https://secure.na1.echosign.com/public/esignWidget?wid=CBFCIBAA3AAABLblqZhAqt_9rHEqy2MggS0uWRmKHUN2HYi8DWNjkgg5N68iKAhRFTy7k2AOEpRHMMorxc_0*) before submitting a pull request.
+
 <hr>
 
-© 2016 Seven Bridges Genomics, Inc. Licensed under the Apache License 2.0.
+© 2017 Seven Bridges Genomics, Inc. Licensed under the Apache License 2.0.

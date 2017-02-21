@@ -6,11 +6,11 @@
 Billing <- setRefClass("Billing", contains = "Item",
 
                        fields = list(
-                           id                = "character_OR_NULL",
-                           name              = "character_OR_NULL",
-                           owner             = "character_OR_NULL",
+                           id                = "characterORNULL",
+                           name              = "characterORNULL",
+                           owner             = "characterORNULL",
                            privileges        = "listORNULL",
-                           type              = "character_OR_NULL",
+                           type              = "characterORNULL",
                            pending           = "logicalORNULL",
                            disabled          = "logicalORNULL",
                            active            = "logicalORNULL",

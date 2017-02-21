@@ -25,7 +25,7 @@
 #' @field sysenv_token Name of the system environment variable storing
 #' the auth token. By default: \code{"SB_AUTH_TOKEN"}.
 #' @field config_file [character] Location of the user configuration file.
-#' By default: \code{"~/.sevenbridges/credential"}.
+#' By default: \code{"~/.sevenbridges/credentials"}.
 #' @field profile_name [character] Profile name in the user configuration file.
 #' The default value is \code{"default"}.
 #' @field fs FS object, for mount and unmount file system.
@@ -48,16 +48,16 @@
 #'
 #' # Authentication with user configuration file
 #' # This will load profile `default` from config
-#' # file `~/.sevenbridges/credential` by default
+#' # file `~/.sevenbridges/credentials` by default
 #' a <- Auth(from = "file")}
 Auth <- setRefClass("Auth", fields = list(from         = "character",
-                                          platform     = "character_OR_NULL",
+                                          platform     = "characterORNULL",
                                           url          = "character",
                                           token        = "character",
-                                          sysenv_url   = "character_OR_NULL",
-                                          sysenv_token = "character_OR_NULL",
-                                          config_file  = "character_OR_NULL",
-                                          profile_name = "character_OR_NULL",
+                                          sysenv_url   = "characterORNULL",
+                                          sysenv_token = "characterORNULL",
+                                          config_file  = "characterORNULL",
+                                          profile_name = "characterORNULL",
                                           fs           = "FSORNULL"),
 
                     methods = list(

@@ -29,13 +29,13 @@
 #' Folders(id = "test_id", name = "test.bam")
 Folders <- setRefClass("Folders", contains = c("Item"),
 
-                       fields = list(id          = "character_OR_NULL",
-                                     name        = "character_OR_NULL",
-                                     project     = "character_OR_NULL",
-                                     parent      = "character_OR_NULL",
-                                     type        = "character_OR_NULL",
-                                     created_on  = "character_OR_NULL",
-                                     modified_on = "character_OR_NULL"),
+                       fields = list(id          = "characterORNULL",
+                                     name        = "characterORNULL",
+                                     project     = "characterORNULL",
+                                     parent      = "characterORNULL",
+                                     type        = "characterORNULL",
+                                     created_on  = "characterORNULL",
+                                     modified_on = "characterORNULL"),
 
                        methods = list(
 

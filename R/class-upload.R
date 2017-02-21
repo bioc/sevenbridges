@@ -3,11 +3,11 @@ Part <- setRefClass("Part", contains = "Item",
                     fields = list(
                         part_number   = "numericORNULL",
                         part_size     = "numericORNULL",
-                        url           = "character_OR_NULL",
-                        expires       = "character_OR_NULL",
+                        url           = "characterORNULL",
+                        expires       = "characterORNULL",
                         success_codes = "listORNULL",
                         report        = "listORNULL",
-                        etag          = "character_OR_NULL"),
+                        etag          = "characterORNULL"),
 
                     methods = list(
 
@@ -47,12 +47,12 @@ Part <- setRefClass("Part", contains = "Item",
 Upload <- setRefClass("Upload", contains = "Item",
 
                       fields = list(
-                          file             = "character_OR_NULL",
-                          project_id       = "character_OR_NULL",
-                          name             = "character_OR_NULL",
+                          file             = "characterORNULL",
+                          project_id       = "characterORNULL",
+                          name             = "characterORNULL",
                           size             = "numericORNULL",
                           part_size        = "numericORNULL",
-                          upload_id        = "character_OR_NULL",
+                          upload_id        = "characterORNULL",
                           part             = "listORNULL",
                           part_length      = "integerORNULL",
                           part_finished    = "integerORNULL",
