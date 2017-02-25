@@ -1,3 +1,28 @@
+# sevenbridges 1.5.9
+
+## New Features
+
+### Seven Bridges Command Line Uploader Interface
+
+With this update, users are able to download the Seven Bridges command line uploader (Java-based) for the corresponding platform, and control the command line uploader within R directly. This offers another option for uploading (large) files in addition to API file uploading. Related changes are:
+
+- New function `get_uploader()` for downloading Seven Bridges command line uploader for specific platforms. The old function `misc_get_uploader()` is deprecated.
+- New functions `cli_upload()`, `cli_list_projects()`, `cli_list_tags()` as the R interface for Seven Bridges command line uploader. The old function `misc_upload_cli()` is deprecated.
+
+For detailed usage of these functions, please check [this section](https://sbg.github.io/sevenbridges-r/articles/api.html#upload-files-via-command-line-uploader) in the vignette.
+
+## Bug Fixes
+
+- Fixed task output files download issue ([#52](https://github.com/sbg/sevenbridges-r/issues/52)).
+- Fixed IDE Docker image build issues; removed the libssl-dev dependency; updated Dockerfile ([#50](https://github.com/sbg/sevenbridges-r/issues/50)).
+
+## Improvements
+
+- New function `get_token()` for getting the authentication token for different Seven Bridges platforms. The old function `misc_get_token()` is deprecated.
+- `misc_make_metadata()` is deprecated, use `Metadata()` for metadata constructor instead.
+- API status code has been updated to the latest version.
+- Added docker pull stats badge ([#49](https://github.com/sbg/sevenbridges-r/issues/49)).
+
 # sevenbridges 1.5.8
 
 ## Bug Fixes

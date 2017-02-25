@@ -2,9 +2,9 @@
 
 [![Build Status](https://travis-ci.org/sbg/sevenbridges-r.svg?branch=master)](https://travis-ci.org/sbg/sevenbridges-r)
 [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/sbg/sevenbridges-r?branch=master&svg=true)](https://ci.appveyor.com/project/road2stat/sevenbridges-r)
-[![platform](https://www.bioconductor.org/shields/availability/devel/sevenbridges.svg)](https://bioconductor.org/packages/release/bioc/html/sevenbridges.html#archives)
-[![bioc](https://www.bioconductor.org/shields/years-in-bioc/sevenbridges.svg)](https://bioconductor.org/packages/release/bioc/html/sevenbridges.html#since)
-[![downloads](https://www.bioconductor.org/shields/downloads/sevenbridges.svg)](https://bioconductor.org/packages/stats/bioc/sevenbridges/)
+[![BioC](https://www.bioconductor.org/shields/years-in-bioc/sevenbridges.svg)](https://bioconductor.org/packages/release/bioc/html/sevenbridges.html#since)
+[![Downloads](https://www.bioconductor.org/shields/downloads/sevenbridges.svg)](https://bioconductor.org/packages/stats/bioc/sevenbridges/)
+[![Docker Pulls](https://img.shields.io/docker/pulls/sevenbridges/sevenbridges-r.svg)](https://hub.docker.com/r/sevenbridges/sevenbridges-r/)
 
 [BioC (Release)](https://www.bioconductor.org/packages/release/bioc/html/sevenbridges.html) · [BioC (Development)](https://www.bioconductor.org/packages/devel/bioc/html/sevenbridges.html) · [GitHub (Latest)](https://github.com/sbg/sevenbridges-r)
 
@@ -107,9 +107,10 @@ Install latest version of sevenbridges from GitHub with the following:
 source("https://bioconductor.org/biocLite.R")
 biocLite("readr")
 
-devtools::install_github("sbg/sevenbridges-r", build_vignettes = TRUE,
-                         repos = BiocInstaller::biocinstallRepos(),
-                         dependencies = TRUE)
+devtools::install_github(
+    "sbg/sevenbridges-r",
+    repos = BiocInstaller::biocinstallRepos(),
+    build_vignettes = TRUE, dependencies = TRUE)
 ```
 
 If you have trouble with `pandoc` and do not want to install it,  set `build_vignettes = FALSE` to avoid building the vignettes.
@@ -178,24 +179,27 @@ tsk$monitor()
 
 ```r
 # Batch by item
-(tsk <- p$task_add(name = "RNA DE report new batch 2",
-                   description = "RNA DE analysis report",
-                   app = rna.app$id,
-                   batch = batch(input = "bamfiles"),
-                   inputs = list(bamfiles = bamfiles.in,
-                                 design = design.in,
-                                 gtffile = gtf.in)))
+(tsk <- p$task_add(
+    name = "RNA DE report new batch 2",
+    description = "RNA DE analysis report",
+    app = rna.app$id,
+    batch = batch(input = "bamfiles"),
+    inputs = list(bamfiles = bamfiles.in,
+                  design = design.in,
+                  gtffile = gtf.in)))
 
-# Batch by metadata. Note that input files must have relevant metadata fields specified.
-(tsk <- p$task_add(name = "RNA DE report new batch 3",
-                   description = "RNA DE analysis report",
-                   app = rna.app$id,
-                   batch = batch(input = "fastq",
-                                 c("metadata.sample_id",
-                                 "metadata.library_id")),
-                   inputs = list(bamfiles = bamfiles.in,
-                                 design = design.in,
-                                 gtffile = gtf.in)))
+# Batch by metadata. Note that input files must
+# have relevant metadata fields specified.
+(tsk <- p$task_add(
+    name = "RNA DE report new batch 3",
+    description = "RNA DE analysis report",
+    app = rna.app$id,
+    batch = batch(input = "fastq",
+                  c("metadata.sample_id",
+                    "metadata.library_id")),
+    inputs = list(bamfiles = bamfiles.in,
+                  design = design.in,
+                  gtffile = gtf.in)))
 ```
 
 ### Cross Environment Support
@@ -208,25 +212,23 @@ tsk$monitor()
 
 ```r
 library("readr")
-fd <- fileDef(name = "runif.R",
-              content = read_file(fl))
-rbx <- Tool(id = "runif",
-            label = "runif",
-            hints = requirements(docker(pull = "rocker/r-base"),
-                                 cpu(1), mem(2000)),
-            requirements = requirements(fd),
-            baseCommand = "Rscript runif.R",
-            stdout = "output.txt",
-            inputs = list(input(id = "number",
-                                type = "integer",
-                                position = 1),
-                          input(id = "min",
-                                type = "float",
-                                position = 2),
-                          input(id = "max",
-                                type = "float",
-                                position = 3)),
-            outputs = output(id = "random", glob = "output.txt"))
+fd <- fileDef(name = "runif.R", content = read_file(fl))
+
+rbx <- Tool(
+    id    = "runif",
+    label = "runif",
+    hints = requirements(
+        docker(pull = "rocker/r-base"),
+        cpu(1), mem(2000)),
+    requirements = requirements(fd),
+    baseCommand  = "Rscript runif.R",
+    stdout = "output.txt",
+    inputs = list(
+        input(id = "number", type = "integer", position = 1),
+        input(id = "min",    type = "float",   position = 2),
+        input(id = "max",    type = "float",   position = 3)),
+    outputs = output(id = "random", glob = "output.txt"))
+
 # output CWL JSON
 rbx$toJSON(pretty = TRUE)
 # output CWL YAML
