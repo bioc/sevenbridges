@@ -27,19 +27,21 @@
 #' a length 1 vector as a vector, wrap in \code{I()}.
 #' @param limit How many results to return
 #' @param offset The point at which to start displaying them
+#' @param advance_access Enable advance access features?
+#' Default is \code{FALSE}.
 #' @param fields All API calls take the optional query parameter fields.
 #' This parameter enables you to specify the fields you want to be returned
 #' when listing resources (e.g. all your projects) or getting details of a
 #' specific resource (e.g. a given project). For example, fields="id,name,size"
 #' to return the fields id, name and size for files. More details please check
-#' \url{http://docs.sevenbridges.com/reference#section-general-api-information}
+#' \url{https://docs.sevenbridges.com/reference#section-general-api-information}
 #' @param base_url defeault is \code{"https://api.sbgenomics.com/v2"}
 #' @param ... passed to GET/POST/PUT/DELETE/PATCH call.
 #'
 #' @return returned request list of httr
 #'
 #' @references
-#' \url{http://docs.sevenbridges.com/v1.0/page/api}
+#' \url{https://docs.sevenbridges.com/v1.0/page/api}
 #'
 #' @export api
 #' @examples
@@ -47,15 +49,17 @@
 #' \donttest{
 #' # list projects
 #' api(token = token, path = "projects", method = "GET")}
-api = function(token = NULL, version = 'v2', path = NULL,
-               method = c('GET', 'POST', 'PUT', 'DELETE', 'PATCH'),
-               query = NULL, body = list(),
-               encode = c("json", "form", "multipart"),
-               limit = getOption("sevenbridges")$limit,
-               offset = getOption("sevenbridges")$offset,
-               fields = NULL,
-               base_url = paste0("https://api.sbgenomics.com/", version, "/"),
-               ...) {
+api = function(
+    token = NULL, version = 'v2', path = NULL,
+    method = c('GET', 'POST', 'PUT', 'DELETE', 'PATCH'),
+    query = NULL, body = list(),
+    encode = c("json", "form", "multipart"),
+    limit = getOption("sevenbridges")$limit,
+    offset = getOption("sevenbridges")$offset,
+    advance_access = getOption("sevenbridges")$advance_access,
+    fields = NULL,
+    base_url = paste0("https://api.sbgenomics.com/", version, "/"),
+    ...) {
 
     if (is.null(token))
         stop('token must be provided')
@@ -68,6 +72,10 @@ api = function(token = NULL, version = 'v2', path = NULL,
         # 'Accept' = 'application/json',
         # 'Content-type' = 'application/json'
     )
+
+    # add optional advance access flag
+    if (advance_access) headers = c(
+        headers, 'X-SBG-advance-access' = 'advance')
 
     # setup query
     query = c(query, list(limit = limit, offset = offset, fields = fields))
@@ -164,7 +172,7 @@ status_check = function (req, as = 'parsed', ...) {
 }
 
 # Status codes are from API v2 specification
-# http://docs.sevenbridges.com/reference#api-status-codes
+# https://docs.sevenbridges.com/reference#api-status-codes
 
 .codes = list(
 

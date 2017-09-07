@@ -14,7 +14,8 @@ RUN apt-get update && apt-get install -y  \
     unp \
     emacs \
     supervisor \
-    libfuse-dev
+    libfuse-dev \
+    gnupg
 #   aufs-tools \
 #   cgroupfs-mount
 
@@ -28,8 +29,8 @@ RUN apt-get update && apt-get install -y  \
 
 ## Install Docker
 RUN apt-get install -y apt-transport-https ca-certificates \
-    && apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D \
-    && echo "deb https://apt.dockerproject.org/repo debian-jessie main" > /etc/apt/sources.list.d/docker.list \
+    && apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D \
+    && echo "deb https://apt.dockerproject.org/repo debian-$(lsb_release -cs) main" > /etc/apt/sources.list.d/docker.list \
     && echo "//APT::Default-Release \"testing\";" > /etc/apt/apt.conf.d/default   \
     && apt-cache policy docker-engine
 
@@ -59,9 +60,9 @@ RUN Rscript -e "source('http://bioconductor.org/biocLite.R');\
 #################
 
 ## Install SBG Rabix
-RUN wget https://github.com/rabix/bunny/releases/download/v1.0.0-rc3/rabix-1.0.0-rc3.tar.gz \
-    && tar -zvxf rabix-1.0.0-rc3.tar.gz \
-    && ln -s  /rabix-1.0.0-rc3/rabix.sh /usr/local/bin/rabix.sh
+RUN wget https://github.com/rabix/bunny/releases/download/v1.0.1/rabix-1.0.1.tar.gz \
+    && tar -zvxf rabix-1.0.1.tar.gz \
+    && ln -s  /rabix-cli-1.0.1/rabix /usr/local/bin/rabix
 
 ## Install SBG Command line uploader
 # RUN wget https://igor.sbgenomics.com/sbg-uploader/sbg-uploader.tgz \
