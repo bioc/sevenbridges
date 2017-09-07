@@ -31,11 +31,10 @@ cli_list_projects(
   uploader = "~/Downloads/sbg-uploader/")}
 }
 \references{
-\url{http://docs.sevenbridges.com/docs/upload-via-the-command-line}
+\url{https://docs.sevenbridges.com/docs/upload-via-the-command-line}
 }
 \seealso{
 See \code{\link{cli_upload}} for uploading files with
 the command line uploader, \code{\link{cli_list_tags}} for listing
 all tags in a project.
 }
-

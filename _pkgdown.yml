@@ -1,3 +1,4 @@
-templates:
+template:
   params:
-    bootswatch: yeti
+    bootswatch: cosmo
+    ganalytics: UA-87185344-1
