@@ -34,7 +34,7 @@
 #' when listing resources (e.g. all your projects) or getting details of a
 #' specific resource (e.g. a given project). For example, fields="id,name,size"
 #' to return the fields id, name and size for files. More details please check
-#' \url{https://docs.sevenbridges.com/reference#section-general-api-information}
+#' \url{https://docs.sevenbridges.com/docs/the-api#section-general-api-information}
 #' @param base_url defeault is \code{"https://api.sbgenomics.com/v2"}
 #' @param ... passed to GET/POST/PUT/DELETE/PATCH call.
 #'
@@ -46,8 +46,8 @@
 #' @export api
 #' @examples
 #' token = "your_token"
-#' \donttest{
 #' # list projects
+#' \dontrun{
 #' api(token = token, path = "projects", method = "GET")}
 api = function(
     token = NULL, version = 'v2', path = NULL,
@@ -287,6 +287,7 @@ status_check = function (req, as = 'parsed', ...) {
     "7022" = "Disabling batching action is only available for BATCH tasks.",
     "7023" = "Missing batch_by or batch_input fields. These fields must be included together.",
     "7024" = "Task can not be started due to validation errors.",
+    "7026" = "Editing is available only for tasks which are in DRAFT status. Tasks which are in RUNNING and COMPLETED states can only be renamed.",
 
     # 8xxx: Upload errors
     "8000" = "Upload service is currently unavailable.",
