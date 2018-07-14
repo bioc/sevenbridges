@@ -51,7 +51,7 @@ This parameter enables you to specify the fields you want to be returned
 when listing resources (e.g. all your projects) or getting details of a
 specific resource (e.g. a given project). For example, fields="id,name,size"
 to return the fields id, name and size for files. More details please check
-\url{https://docs.sevenbridges.com/reference#section-general-api-information}}
+\url{https://docs.sevenbridges.com/docs/the-api#section-general-api-information}}
 
 \item{base_url}{defeault is \code{"https://api.sbgenomics.com/v2"}}
 
@@ -70,8 +70,8 @@ additional vignettes pages for more convenient usage.
 }
 \examples{
 token = "your_token"
-\donttest{
 # list projects
+\dontrun{
 api(token = token, path = "projects", method = "GET")}
 }
 \references{

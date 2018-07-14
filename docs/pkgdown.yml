@@ -1,0 +1,11 @@
+pandoc: 2.2.1
+pkgdown: 1.1.0
+pkgdown_sha: ~
+articles:
+  api: api.html
+  apps: apps.html
+  bioc-workflow: bioc-workflow.html
+  cgc-sparql: cgc-sparql.html
+  docker: docker.html
+  rstudio: rstudio.html
+

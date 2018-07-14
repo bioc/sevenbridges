@@ -10,18 +10,21 @@
 
 ## Overview
 
-sevenbridges-r is an [R](https://cran.r-project.org/)/[Bioconductor](https://www.bioconductor.org/) package that provides an interface for the [Seven Bridges Platform](https://www.sbgenomics.com/) and [Cancer Genomics Cloud](https://www.cancergenomicscloud.org/) public APIs.
+sevenbridges-r is an [R](https://www.r-project.org/)/[Bioconductor](https://www.bioconductor.org/) package that provides an interface for the [Seven Bridges Platform](https://www.sevenbridges.com/), the [Cancer Genomics Cloud](https://www.cancergenomicscloud.org/), and [Cavatica](http://www.cavatica.org/) public APIs.
 
-The Seven Bridges Platform is a cloud-based environment for conducting bioinformatic analyses. It is a central hub for teams to store, analyze, and jointly interpret their bioinformatic data. The Platform co-locates analysis workflows alongside the largest genomic datasets to optimize processing, allocating storage and compute resources on demand.
+The [Seven Bridges Platform](https://www.sevenbridges.com/) is a cloud-based environment for conducting bioinformatics analysis. It is a central hub for teams to store, analyze, and jointly interpret their bioinformatic data. The Platform co-locates analysis pipelines alongside the largest genomic datasets to optimize processing, allocating storage, and compute resources on demand.
 
-The Cancer Genomics Cloud (CGC), powered by Seven Bridges, is also a cloud-based computation environment. It was built as one of three pilot systems funded by the [National Cancer Institute](https://www.cancer.gov/) to explore the paradigm of colocalizing massive genomics datasets, like [The Cancer Genome Atlas (TCGA)](https://cancergenome.nih.gov/), alongside secure and scalable computational resources to analyze them. The CGC makes more than a petabyte of multi-dimensional data available immediately to authorized researchers. You can add your own data to analyze alongside TCGA using predefined analytical workflows or your own tools.
+The [Cancer Genomics Cloud (CGC)](https://www.cancergenomicscloud.org/), powered by [Seven Bridges](https://www.sevenbridges.com/), is also a cloud-based computation environment. It was built as one of three pilot systems funded by the [National Cancer Institute](https://www.cancer.gov) to explore the paradigm of colocalizing massive genomics datasets, like The [Cancer Genomics Atlas (TCGA)](https://cancergenome.nih.gov), alongside secure and scalable computational resources to analyze them. The CGC makes more than a petabyte of multi-dimensional data available immediately to authorized researchers. You can add your data to analyze alongside TCGA using predefined analytical workflows or your own tools.
+
+[Cavatica](http://www.cavatica.org/), powered by [Seven Bridges](https://www.sevenbridges.com), is a data analysis and sharing platform designed to accelerate discovery in a scalable, cloud-based compute environment where data, results, and workflows are shared among the world's research community. Cavatica is built in collaboration with the Children Hospital of Philadelphia and it is focused on pediatric data.
 
 ## Table of Contents
 
 - [Overview](#overview)
 - [Installation](#installation)
-  - [Bioconductor - Release Version](#bioconductor---release-version)
-  - [Bioconductor - Development Version](#bioconductor---development-version)
+  - [Check R version](#check-r-version)
+  - [Bioconductor - Release Branch](#bioconductor---release-branch)
+  - [Bioconductor - Development Branch](#bioconductor---development-branch)
   - [Latest Development Version](#latest-development-version)
 - [Features](#features)
   - [Flexible Authentication Methods](#flexible-authentication-methods)
@@ -40,78 +43,66 @@ The Cancer Genomics Cloud (CGC), powered by Seven Bridges, is also a cloud-based
 
 ## Installation
 
-### Bioconductor - Release Version
+### Check R version
 
-This installation is recommended for most users as it is the most stable. The current release of Bioconductor is version 3.5, and it works with __R version 3.4.0__. Users of older R and Bioconductor versions should upgrade to take advantage of new features.
-
-If you do not want to update R, please install the `sevenbridges` package directly from GitHub by following the instructions below.
-
-#### Check R version
-
-First, check which version of R you are using with the following:
+First, check the version of R you are using with the following command (in R):
 
 ```r
 R.version.string
 ```
 
-If you are not running the latest release version of R, install it by the following [these instructions](https://www.bioconductor.org/install/#install-R). If you are using RStudio, close and restart RStudio after installing R. RStudio will detect the new installation.
+If you are not running the latest release version of R, install or upgrade with [these instructions](https://www.bioconductor.org/install/#install-R). If you are using RStudio, restart RStudio after installing R. RStudio will detect the new installation.
 
-#### Install the package
+### Bioconductor - Release Branch
 
-Install the `sevenbridges` package as shown below:
+This is recommended for most users as it is the most stable version.
+
+You can install the package from the `release` branch on Bioconductor using `BiocManager`:
 
 ```r
-source("https://bioconductor.org/biocLite.R")
-biocLite("sevenbridges")
+install.packages("BiocManager")
+BiocManager::install("sevenbridges")
 ```
 
-### Bioconductor - Development Version
+### Bioconductor - Development Branch
 
-If you are developing tools in the `devel` branch or if you are a user who uses the development version for R and Bioconductor, install the package from the bioconductor `devel` branch. You need to install R-devel first by following the directions in ["Using the 'Devel' Version of Bioconductor"](https://bioconductor.org/developers/how-to/useDevel/). After upgrading R, this method of installation is harder. To try the latest features, please install directly from GitHub as next shown below:
+If you are developing tools under the `devel` branch or use the development version of R and Bioconductor, install the package from the Bioconductor `devel` branch. You probably also want to install R-devel first by following the directions in ["Using the 'Devel' Version of Bioconductor"](https://bioconductor.org/developers/how-to/useDevel/).
 
-```r
-source("https://bioconductor.org/biocLite.R")
-useDevel(devel = TRUE)
-biocLite("sevenbridges")
-```
-
-To load the package in R, simply call
+To install the `sevenbridges` package from the `devel` branch, use
 
 ```r
-library("sevenbridges")
+install.packages("BiocManager")
+BiocManager::install("sevenbridges", version = "devel")
 ```
 
 ### Latest Development Version
 
-You can always install the latest development version of the `sevenbridges` package from GitHub. We push to the Bioconductor branch (`release`/`devel`) regularly.
+To try the latest features, please install the package directly from GitHub. We push to the Bioconductor branch (`release` and `devel`) regularly.
 
-#### If `devtools` was not installed
-
-Installing the `sevenbridges` package requires you have the `devtools` package. If you do not have `devtools`, install it from [CRAN](https://cran.r-project.org/web/packages/devtools/README.html).
+Installing the `sevenbridges` package from GitHub requires you have the `devtools` package. If you do not have `devtools`, install it from CRAN first.
 
 ```r
 install.packages("devtools")
 ```
 
-You may got an error and need system dependecies for curl and ssl. For example, you probably need to do the following first in order to install `devtools` and in order to build vignettes since you need `pandoc` under Ubuntu.
+You may get an error for missing system dependecies such as curl and ssl. You probably need to do the following first in order to install `devtools` and to build vignettes since you need `pandoc` under Ubuntu.
 
-```
+```bash
 apt-get update
 apt-get install libcurl4-gnutls-dev libssl-dev pandoc pandoc-citeproc
 ```
 
-#### If `devtools` is already installed
-
-Install latest version of `sevenbridges` from GitHub with the following:
+After `devtools` is installed, install the latest version of `sevenbridges` from GitHub:
 
 ```r
-source("https://bioconductor.org/biocLite.R")
-biocLite("readr")
+install.packages("BiocManager")
+install.packages("readr")
 
 devtools::install_github(
-    "sbg/sevenbridges-r",
-    repos = BiocInstaller::biocinstallRepos(),
-    build_vignettes = TRUE, dependencies = TRUE)
+  "sbg/sevenbridges-r",
+  repos = BiocManager::repositories(),
+  build_vignettes = TRUE, dependencies = TRUE
+)
 ```
 
 If you have trouble with `pandoc` and do not want to install it,  set `build_vignettes = FALSE` to avoid building the vignettes.
@@ -122,130 +113,148 @@ The `sevenbridges` package includes the following features:
 
 ### Flexible Authentication Methods
 
-* Multiple authentication methods support.
+Multiple authentication methods support.
 
-Direct authentication:
+- Direct authentication:
 
 ```r
-# direct authentication
+# Direct authentication
 a <- Auth(token = "your_token", platform = "cgc")
+
 # or use base url
 a <- Auth(token = "your_token", url = "https://cgc-api.sbgenomics.com/v2")
 ```
 
-Authentication via system environment variables:
+- Authentication via system environment variables:
 
 ```r
 sbg_set_env(token = "your_token", url = "https://cgc-api.sbgenomics.com/v2")
 a <- Auth(from = "env")
 ```
 
-Authentication via a user configuration file, collect and manage your credentials for multiple accounts across various Seven Bridges environments:
+- Authentication via a user configuration file, collect and manage your credentials for multiple accounts across various Seven Bridges environments:
 
 ```r
-a <- Auth(from = "file", profile_name = "aws-us-tengfei")
+a <- Auth(from = "file", profile_name = "aws-us-username")
 ```
 
 Please check `vignette("api", package = "sevenbridges")` for technical details about all available authentication methods.
 
 ### Complete API R Client
 
-* A complete API R client with a user-friendly, object-oriented API with printing and support operations for API requests relating to users, billing, projects, files, apps, and tasks. Short examples are also included, as shown below:
+A complete API R client with a user-friendly, object-oriented API with printing and support operations for API requests relating to users, billing, projects, files, apps, and tasks. Short examples are also included, as shown below:
 
 ```r
 # Get a project by pattern-matching its name
 p <- a$project("demo")
+
 # Get a project by its id
-p <- a$project(id = "tengfei/demo")
+p <- a$project(id = "username/demo")
+
 # Delete files from a project
 p$file("sample.tz")$delete()
+
 # Upload fies from a folder to a project and include file metadata
 p$upload("folder_path", metadata = list(platform = "Illumina"))
 ```
 
 ### Task Monitoring
 
-* A task monitoring hook which allows you to add a hook function to specific task statuses as you monitor a task. For example, you can opt to receive an email when the task is completed or specify to download all files produced by the task, as shown below:
+A task monitoring hook which allows you to add a hook function to specific task statuses as you monitor a task. For example, you can opt to receive an email when the task is completed or specify to download all files produced by the task, as shown below:
 
 ```r
 setTaskHook("completed", function() {
-    tsk$download("~/Downloads")
+  tsk$download("~/Downloads")
 })
 tsk$monitor()
 ```
 
 ### Batch Tasks Support
 
-* Batch tasks by metadata and by item.
+Batch tasks by metadata and by item.
 
 ```r
 # Batch by item
 (tsk <- p$task_add(
-    name = "RNA DE report new batch 2",
-    description = "RNA DE analysis report",
-    app = rna.app$id,
-    batch = batch(input = "bamfiles"),
-    inputs = list(bamfiles = bamfiles.in,
-                  design = design.in,
-                  gtffile = gtf.in)))
+  name = "RNA DE report new batch 2",
+  description = "RNA DE analysis report",
+  app = rna.app$id,
+  batch = batch(input = "bamfiles"),
+  inputs = list(
+    bamfiles = bamfiles.in,
+    design = design.in,
+    gtffile = gtf.in
+  )
+))
 
 # Batch by metadata. Note that input files must
 # have relevant metadata fields specified.
 (tsk <- p$task_add(
-    name = "RNA DE report new batch 3",
-    description = "RNA DE analysis report",
-    app = rna.app$id,
-    batch = batch(input = "fastq",
-                  c("metadata.sample_id",
-                    "metadata.library_id")),
-    inputs = list(bamfiles = bamfiles.in,
-                  design = design.in,
-                  gtffile = gtf.in)))
+  name = "RNA DE report new batch 3",
+  description = "RNA DE analysis report",
+  app = rna.app$id,
+  batch = batch(
+    input = "fastq",
+    c("metadata.sample_id", "metadata.library_id")
+  ),
+  inputs = list(
+    bamfiles = bamfiles.in,
+    design = design.in,
+    gtffile = gtf.in
+  )
+))
 ```
 
 ### Cross Environment Support
 
-* Cross-platform support for Seven Bridges environments, such as [Cancer Genomics Cloud](https://www.cancergenomicscloud.org/) or [Seven Bridges Platform](https://www.sbgenomics.com/) on either Amazon Web Services or Google Cloud Platform.
+Cross-platform support for Seven Bridges environments, such as [Cancer Genomics Cloud](https://www.cancergenomicscloud.org/) or [Seven Bridges Platform](https://www.sbgenomics.com/) on either Amazon Web Services or Google Cloud Platform.
 
 ### Common Workflow Language Tool Interface
 
-* A [Common Workflow Language (CWL)](http://www.commonwl.org/) Tool interface to directly describe your tool in R, export it to JSON or YAML, or add it to your online project. This package defines a complete set of CWL object, so you can describe tools as follows:
+A [Common Workflow Language (CWL)](http://www.commonwl.org/) Tool interface to directly describe your tool in R, export it to JSON or YAML, or add it to your online project. This package defines a complete set of CWL object, so you can describe tools as follows:
 
 ```r
 library("readr")
 fd <- fileDef(name = "runif.R", content = read_file(fl))
 
 rbx <- Tool(
-    id    = "runif",
-    label = "runif",
-    hints = requirements(
-        docker(pull = "rocker/r-base"),
-        cpu(1), mem(2000)),
-    requirements = requirements(fd),
-    baseCommand  = "Rscript runif.R",
-    stdout = "output.txt",
-    inputs = list(
-        input(id = "number", type = "integer", position = 1),
-        input(id = "min",    type = "float",   position = 2),
-        input(id = "max",    type = "float",   position = 3)),
-    outputs = output(id = "random", glob = "output.txt"))
+  id = "runif",
+  label = "runif",
+  hints = requirements(
+    docker(pull = "rocker/r-base"),
+    cpu(1), mem(2000)
+  ),
+  requirements = requirements(fd),
+  baseCommand = "Rscript runif.R",
+  stdout = "output.txt",
+  inputs = list(
+    input(id = "number", type = "integer", position = 1),
+    input(id = "min", type = "float", position = 2),
+    input(id = "max", type = "float", position = 3)
+  ),
+  outputs = output(id = "random", glob = "output.txt")
+)
 
-# output CWL JSON
+# Print CWL JSON
 rbx$toJSON(pretty = TRUE)
-# output CWL YAML
+
+# Print CWL YAML
 rbx$toYAML()
 ```
 
 ### Utilities for Tool and Flow
 
-* Utilities for Tool and Flow, for example
+Utilities for `Tool` and `Flow`, for example
 
 ```r
-# converting a SBG CWL JSON file
 library("sevenbridges")
+
+# convert a SBG CWL JSON file
 t1 <- system.file("extdata/app", "tool_star.json", package = "sevenbridges")
+
 # convert json file into a Tool object
 t1 <- convert_app(t1)
+
 # shows all input matrix
 t1$input_matrix()
 ```
@@ -291,8 +300,11 @@ Log into your RStudio at `http://<url>:8787`. Then, try to copy an app to your h
 
 ```r
 dir.create("~/ShinyApps")
-file.copy("/usr/local/lib/R/site-library/shiny/examples/01_hello/",
-          "~/ShinyApps/", recursive = TRUE)
+file.copy(
+  "/usr/local/lib/R/site-library/shiny/examples/01_hello/",
+  "~/ShinyApps/",
+  recursive = TRUE
+)
 ```
 
 If you are logged in as user `rstudio`, visit  `http://192.168.99.100:3838/rstudio/01_hello`. You should be able to see the "hello" example.
