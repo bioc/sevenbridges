@@ -21,7 +21,7 @@ knitr::opts_chunk$set(comment = "")
 
 This tutorial assume you have basic knowledge about Docker concept.
 
-Note: Right now we are supporting CWL draft 2 with SBG extension, but we will support CWL v1.0 soon.
+**Note**: Right now we are supporting CWL draft 2 with SBG extension, but we will support CWL v1.0 soon.
 
 # App, Workflow, and Tool
 
@@ -60,10 +60,10 @@ Sometimes people share Tool in pure JSON text format. You can simply load it int
 
 ```{r}
 library("sevenbridges")
-t1 = system.file("extdata/app", "tool_star.json", package = "sevenbridges")
-# # convert json file into a Tool object
-t1 = convert_app(t1)
-# # try print it yourself
+t1 <- system.file("extdata/app", "tool_star.json", package = "sevenbridges")
+# # convert JSON file into a Tool object
+t1 <- convert_app(t1)
+# # try print it out
 # t1
 ```
 
@@ -121,7 +121,7 @@ Before we continue, this is how it looks like for full tool description, you don
 
 ```{r, eval = TRUE, comment=''}
 fl <- system.file("docker/rnaseqGene/rabix", "generator.R", package = "sevenbridges")
-cat(readLines(fl), sep = '\n')
+cat(readLines(fl), sep = "\n")
 ```
 
 Now let's break it down:
@@ -140,30 +140,31 @@ There are some special type: ItemArray and enum. For ItemArray the type could be
 
 We also provide an __enum__ type, when you specify the enum, please pass the required name and symbols like this `type = enum("format", c("pdf", "html"))` then in the UI on the platform you will be poped with drop down when you execute the task.
 
-
-
 Now let's work though from simple case to most flexible case.
 
 ### Using existing Docker images and command
 
 If you already have a Docker image in mind that provide the functionality you need, you can just use it. The `baseCommand` is the command line you want to execute in that container. `stdout` specify the output file you want to capture the standard output and collect it on the platform.
 
-In this simple example, I know Docker image `rocker/r-base` has a function called `runif` I can directly called in command line with `Rscript -e`. Then I want the ouput is collected in `stdout` and ask the file system to capture the files matches "*.txt". Please pay attention to this, you tool may produce many intermediate files in current folder, if you don't tell which output you need, they will all be ignored, so make sure you collect those files via `outputs` parameter.
+In this simple example, we know Docker image `rocker/r-base` has a function called `runif` we can directly call in the command line with `Rscript -e`. Then we want the ouput to be collected in `stdout` and ask the file system to capture the output files that matches the pattern `*.txt`. Please pay attention to this, your tool may produce many intermediate files in the current folder, if you don't tell which output you need, they will all be ignored, so make sure you collect those files via the `outputs` parameter.
 
 ```{r}
 library("sevenbridges")
-rbx <- Tool(id = "runif",
-            label = "runif",
-            hints = requirements(docker(pull = "rocker/r-base")),
-            baseCommand = "Rscript -e 'runif(100)'",
-            stdout = "output.txt",
-            outputs = output(id = "random", glob = "*.txt"))
+
+rbx <- Tool(
+  id = "runif",
+  label = "runif",
+  hints = requirements(docker(pull = "rocker/r-base")),
+  baseCommand = "Rscript -e 'runif(100)'",
+  stdout = "output.txt",
+  outputs = output(id = "random", glob = "*.txt")
+)
 
 rbx
 rbx$toJSON()
 ```
 
-By default the tool object shows YAML, but you can simply convert it to JSON and copy it to your seven bridges platform graphic editor by importing JSON.
+By default, the tool object shows YAML, but you can simply convert it to JSON and copy it to your seven bridges platform graphic editor by importing JSON.
 
 ```{r}
 rbx$toJSON()
@@ -173,28 +174,33 @@ rbx$toYAML()
 
 ### Add customized script to existing Docker image
 
-Now you make want to run your own R script, but you still don't want to create new command line and a new Docker image. You just want to run your script with new input files in existing container, it's time to introduce `fileDef`. You can either directly write script as string or just import a R file to `content`. And provided as `requirements`.
+Now you may want to run your own R script, but you still don't want to create new command line and a new Docker image. You just want to run your script with new input files in existing container, it's time to introduce `fileDef`. You can either directly write script as string or just import a R file to `content`. And provided as `requirements`.
 
 ```{r}
 # Make a new file
-fd <- fileDef(name = "runif.R",
-              content = "set.seed(1)
-                   runif(100)")
+fd <- fileDef(
+  name = "runif.R",
+  content = "set.seed(1); runif(100)"
+)
 
 # read via reader
 .srcfile <- system.file("docker/sevenbridges/src/runif.R", package = "sevenbridges")
 library("readr")
-fd <- fileDef(name = "runif.R",
-              content = read_file(.srcfile))
+fd <- fileDef(
+  name = "runif.R",
+  content = read_file(.srcfile)
+)
 
 # add script to your tool
-rbx <- Tool(id = "runif",
-            label = "runif",
-            hints = requirements(docker(pull = "rocker/r-base")),
-            requirements = requirements(fd),
-            baseCommand = "Rscript runif.R",
-            stdout = "output.txt",
-            outputs = output(id = "random", glob = "*.txt"))
+rbx <- Tool(
+  id = "runif",
+  label = "runif",
+  hints = requirements(docker(pull = "rocker/r-base")),
+  requirements = requirements(fd),
+  baseCommand = "Rscript runif.R",
+  stdout = "output.txt",
+  outputs = output(id = "random", glob = "*.txt")
+)
 ```
 
 How about multiple script?
@@ -203,19 +209,24 @@ How about multiple script?
 # or simply readLines
 .srcfile <- system.file("docker/sevenbridges/src/runif.R", package = "sevenbridges")
 library("readr")
-fd1 <- fileDef(name = "runif.R",
-              content = read_file(.srcfile))
-fd2 <- fileDef(name = "runif2.R",
-              content = "set.seed(1)
-                   runif(100)")
+fd1 <- fileDef(
+  name = "runif.R",
+  content = read_file(.srcfile)
+)
+fd2 <- fileDef(
+  name = "runif2.R",
+  content = "set.seed(1); runif(100)"
+)
 
-rbx <- Tool(id = "runif_twoscript",
-            label = "runif_twoscript",
-            hints = requirements(docker(pull = "rocker/r-base")),
-            requirements = requirements(fd1, fd2),
-            baseCommand = "Rscript runif.R",
-            stdout = "output.txt",
-            outputs = output(id = "random", glob = "*.txt"))
+rbx <- Tool(
+  id = "runif_twoscript",
+  label = "runif_twoscript",
+  hints = requirements(docker(pull = "rocker/r-base")),
+  requirements = requirements(fd1, fd2),
+  baseCommand = "Rscript runif.R",
+  stdout = "output.txt",
+  outputs = output(id = "random", glob = "*.txt")
+)
 ```
 
 
@@ -223,7 +234,7 @@ rbx <- Tool(id = "runif_twoscript",
 
 All those examples above, many parameters are hard-coded in your script, you don't have flexiblity to control how many numbers to generate. Most often, your tools or command line tools expose some inputs arguments to users. You need a better way to describe a command line with input/output.
 
-Now we bring the example to next level, for example, I prepare a Docker image called "tengfei/runif" on Docker Hub, this container has a exeutable command called "runif.R", you don't have to know what's inside, you only have to know when you run the command line in that container it looks like this
+Now we bring the example to next level. For example, we prepare a Docker image called `RFranklin/runif` on Docker Hub. This container has a exeutable command called `runif.R`, you don't have to know what is inside, you only have to know when you run the command line in that container it looks like this
 
 ```
 runif.R --n=100 --max=100 --min=1 --seed=123
@@ -238,89 +249,115 @@ So the goal here is to describe this command and expose all input parameters and
 
 To define input, you can specify
 
-- __id__ : unique identifier to this input node.
-- __description__: description, also visible on UI.
-- __type__: required to specify input types, files, integer, or character.
-- __label__: human readable label for this input node.
-- __prefix__: the prefix in command line for this input parameter.
-- __default__: default value for this input.
-- __required__: is this input parameter required or not. If required, when you execte the tool you have to provide a value for the parameter.
-- __cmdInclude__: included in command line or not.
+- `id` : unique identifier to this input node.
+- `description`: description, also visible on UI.
+- `type`: required to specify input types, files, integer, or character.
+- `label`: human readable label for this input node.
+- `prefix`: the prefix in command line for this input parameter.
+- `default`: default value for this input.
+- `required`: is this input parameter required or not. If required, when you execte the tool you have to provide a value for the parameter.
+- `cmdInclude`: included in command line or not.
 
 Output is similar, espeicaly when you want to collect file, you can use `glob` for pattern matching.
 
 ```{r}
 # pass a input list
-in.lst <- list(input(id = "number",
-                     description = "number of observations",
-                     type = "integer",
-                     label = "number",
-                     prefix = "--n",
-                     default = 1,
-                     required = TRUE,
-                     cmdInclude = TRUE),
-               input(id = "min",
-                     description = "lower limits of the distribution",
-                     type = "float",
-                     label = "min",
-                     prefix = "--min",
-                     default = 0),
-               input(id = "max",
-                     description = "upper limits of the distribution",
-                     type = "float",
-                     label = "max",
-                     prefix = "--max",
-                     default = 1),
-               input(id = "seed",
-                     description = "seed with set.seed",
-                     type = "float",
-                     label = "seed",
-                     prefix = "--seed",
-                     default = 1))
+in.lst <- list(
+  input(
+    id = "number",
+    description = "number of observations",
+    type = "integer",
+    label = "number",
+    prefix = "--n",
+    default = 1,
+    required = TRUE,
+    cmdInclude = TRUE
+  ),
+  input(
+    id = "min",
+    description = "lower limits of the distribution",
+    type = "float",
+    label = "min",
+    prefix = "--min",
+    default = 0
+  ),
+  input(
+    id = "max",
+    description = "upper limits of the distribution",
+    type = "float",
+    label = "max",
+    prefix = "--max",
+    default = 1
+  ),
+  input(
+    id = "seed",
+    description = "seed with set.seed",
+    type = "float",
+    label = "seed",
+    prefix = "--seed",
+    default = 1
+  )
+)
 
 # the same method for outputs
-out.lst <- list(output(id = "random",
-                       type = "file",
-                       label = "output",
-                       description = "random number file",
-                       glob = "*.txt"),
-                output(id = "report",
-                       type = "file",
-                       label = "report",
-                       glob = "*.html"))
+out.lst <- list(
+  output(
+    id = "random",
+    type = "file",
+    label = "output",
+    description = "random number file",
+    glob = "*.txt"
+  ),
+  output(
+    id = "report",
+    type = "file",
+    label = "report",
+    glob = "*.html"
+  )
+)
 
-rbx <- Tool(id = "runif",
-            label = "Random number generator",
-            hints = requirements(docker(pull = "tengfei/runif")),
-            baseCommand = "runif.R",
-            inputs = in.lst,  # or ins.df
-            outputs = out.lst)
+rbx <- Tool(
+  id = "runif",
+  label = "Random number generator",
+  hints = requirements(docker(pull = "RFranklin/runif")),
+  baseCommand = "runif.R",
+  inputs = in.lst, # or ins.df
+  outputs = out.lst
+)
 ```
 
 Alternatively you can use data.frame as example for input and output, but it's less flexible.
 
 ```{r}
-in.df <- data.frame(id = c("number", "min", "max", "seed"),
-                    description = c("number of observation",
-                                    "lower limits of the distribution",
-                                    "upper limits of the distribution",
-                                    "seed with set.seed"),
-                    type = c("integer", "float", "float", "float"),
-                    label = c("number" ,"min", "max", "seed"),
-                    prefix = c("--n", "--min", "--max", "--seed"),
-                    default = c(1, 0, 10, 123),
-                    required = c(TRUE, FALSE, FALSE, FALSE))
+in.df <- data.frame(
+  id = c("number", "min", "max", "seed"),
+  description = c(
+    "number of observation",
+    "lower limits of the distribution",
+    "upper limits of the distribution",
+    "seed with set.seed"
+  ),
+  type = c("integer", "float", "float", "float"),
+  label = c("number", "min", "max", "seed"),
+  prefix = c("--n", "--min", "--max", "--seed"),
+  default = c(1, 0, 10, 123),
+  required = c(TRUE, FALSE, FALSE, FALSE)
+)
 
-out.df <- data.frame(id = c("random", "report"),
-                     type = c("file", "file"),
-                     glob = c("*.txt", "*.html"))
+out.df <- data.frame(
+  id = c("random", "report"),
+  type = c("file", "file"),
+  glob = c("*.txt", "*.html")
+)
 
-rbx <- Tool(id = "runif",
-            label = "Random number generator",
-            hints = requirements(docker(pull = "tengfei/runif"), cpu(1), mem(2000)),
-            baseCommand = "runif.R",
-            inputs = in.df,  # or ins.df
-            outputs = out.df)
+rbx <- Tool(
+  id = "runif",
+  label = "Random number generator",
+  hints = requirements(docker(pull = "RFranklin/runif"), cpu(1), mem(2000)),
+  baseCommand = "runif.R",
+  inputs = in.df, # or ins.df
+  outputs = out.df
+)
 ```
 
 ### Quick command line interface with `commandArgs` (position and named args)
@@ -343,7 +380,8 @@ This is how you do in your R script
 
 ```{r, eval = TRUE, comment = ""}
 fl <- system.file("docker/sevenbridges/src", "runif2spin.R",
-                  package = "sevenbridges")
+  package = "sevenbridges"
+)
 cat(readLines(fl), sep = "\n")
 ```
 
@@ -353,25 +391,37 @@ Then just describe my tool in this way, add your script as you learned in previo
 
 ```{r}
 library("readr")
-fd <- fileDef(name = "runif.R",
-              content = read_file(fl))
+fd <- fileDef(
+  name = "runif.R",
+  content = read_file(fl)
+)
 
-rbx <- Tool(id = "runif",
-            label = "runif",
-            hints = requirements(docker(pull = "rocker/r-base"), cpu(1), mem(2000)),
-            requirements = requirements(fd),
-            baseCommand = "Rscript runif.R",
-            stdout = "output.txt",
-            inputs = list(input(id       = "number",
-                                type     = "integer",
-                                position = 1),
-                          input(id       = "min",
-                                type     = "float",
-                                position = 2),
-                          input(id       = "max",
-                                type     = "float",
-                                position = 3)),
-            outputs = output(id = "random", glob = "output.txt"))
+rbx <- Tool(
+  id = "runif",
+  label = "runif",
+  hints = requirements(docker(pull = "rocker/r-base"), cpu(1), mem(2000)),
+  requirements = requirements(fd),
+  baseCommand = "Rscript runif.R",
+  stdout = "output.txt",
+  inputs = list(
+    input(
+      id = "number",
+      type = "integer",
+      position = 1
+    ),
+    input(
+      id = "min",
+      type = "float",
+      position = 2
+    ),
+    input(
+      id = "max",
+      type = "float",
+      position = 3
+    )
+  ),
+  outputs = output(id = "random", glob = "output.txt")
+)
 ```
 
 
@@ -386,7 +436,7 @@ Here is how you do in R script.
 
 ```{r, eval = TRUE, comment=''}
 fl <- system.file("docker/sevenbridges/src", "runif_args.R", package = "sevenbridges")
-cat(readLines(fl), sep = '\n')
+cat(readLines(fl), sep = "\n")
 ```
 
 
@@ -394,28 +444,40 @@ Then just describe my tool in this way, note, I use `separate=FALSE` and add `=`
 
 ```{r}
 library("readr")
-fd <- fileDef(name = "runif.R",
-              content = read_file(fl))
+fd <- fileDef(
+  name = "runif.R",
+  content = read_file(fl)
+)
 
-rbx <- Tool(id = "runif",
-            label = "runif",
-            hints = requirements(docker(pull = "rocker/r-base"), cpu(1), mem(2000)),
-            requirements = requirements(fd),
-            baseCommand = "Rscript runif.R",
-            stdout = "output.txt",
-            inputs = list(input(id       = "number",
-                                type     = "integer",
-                                separate = FALSE,
-                                prefix   = "--n="),
-                          input(id       = "min",
-                                type     = "float",
-                                separate = FALSE,
-                                prefix   = "--min="),
-                          input(id       = "max",
-                                type     = "float",
-                                separate = FALSE,
-                                prefix   = "--max=")),
-            outputs = output(id = "random", glob = "output.txt"))
+rbx <- Tool(
+  id = "runif",
+  label = "runif",
+  hints = requirements(docker(pull = "rocker/r-base"), cpu(1), mem(2000)),
+  requirements = requirements(fd),
+  baseCommand = "Rscript runif.R",
+  stdout = "output.txt",
+  inputs = list(
+    input(
+      id = "number",
+      type = "integer",
+      separate = FALSE,
+      prefix = "--n="
+    ),
+    input(
+      id = "min",
+      type = "float",
+      separate = FALSE,
+      prefix = "--min="
+    ),
+    input(
+      id = "max",
+      type = "float",
+      separate = FALSE,
+      prefix = "--max="
+    )
+  ),
+  outputs = output(id = "random", glob = "output.txt")
+)
 ```
 
 ### docopt: a better and formal way to make command line interface
@@ -428,7 +490,7 @@ You can use spin/stich from knitr to generate report directly from a Rscript wit
 
 ```{r, eval = TRUE, comment=''}
 fl <- system.file("docker/sevenbridges/src", "runif_args.R", package = "sevenbridges")
-cat(readLines(fl), sep = '\n')
+cat(readLines(fl), sep = "\n")
 ```
 
 You command is something like this
@@ -441,30 +503,44 @@ And so I describe my tool like this with Docker image `rocker/tidyverse` which c
 
 ```{r}
 library("readr")
-fd <- fileDef(name = "runif.R",
-              content = read_file(fl))
+fd <- fileDef(
+  name = "runif.R",
+  content = read_file(fl)
+)
 
-rbx <- Tool(id = "runif",
-            label = "runif",
-            hints = requirements(docker(pull = "rocker/tidyverse"), cpu(1), mem(2000)),
-            requirements = requirements(fd),
-            baseCommand = "Rscript -e \"rmarkdown::render(knitr::spin('runif.R', FALSE))\" --args",
-            stdout = "output.txt",
-            inputs = list(input(id       = "number",
-                                type     = "integer",
-                                separate = FALSE,
-                                prefix   = "--n="),
-                          input(id       = "min",
-                                type     = "float",
-                                separate = FALSE,
-                                prefix   = "--min="),
-                          input(id       = "max",
-                                type     = "float",
-                                separate = FALSE,
-                                prefix   = "--max=")),
-            outputs = list(output(id = "stdout", type = "file", glob = "output.txt"),
-                           output(id = "random", type = "file", glob = "*.csv"),
-                           output(id = "report", type = "file", glob = "*.html")))
+rbx <- Tool(
+  id = "runif",
+  label = "runif",
+  hints = requirements(docker(pull = "rocker/tidyverse"), cpu(1), mem(2000)),
+  requirements = requirements(fd),
+  baseCommand = "Rscript -e \"rmarkdown::render(knitr::spin('runif.R', FALSE))\" --args",
+  stdout = "output.txt",
+  inputs = list(
+    input(
+      id = "number",
+      type = "integer",
+      separate = FALSE,
+      prefix = "--n="
+    ),
+    input(
+      id = "min",
+      type = "float",
+      separate = FALSE,
+      prefix = "--min="
+    ),
+    input(
+      id = "max",
+      type = "float",
+      separate = FALSE,
+      prefix = "--max="
+    )
+  ),
+  outputs = list(
+    output(id = "stdout", type = "file", glob = "output.txt"),
+    output(id = "random", type = "file", glob = "*.csv"),
+    output(id = "report", type = "file", glob = "*.html")
+  )
+)
 ```
 
 
@@ -477,18 +553,26 @@ You will get a report in the end.
 Sometimes if you want your output files inherit from particular input file, just use `inheritMetadataFrom` in your output() call and pass the input file id. If you want to add additional metadata, you could pass `metadata` a list in your output() function call. For example, I want my output report inherit all metadata from my "bam_file" input node (which I don't have in this example though) with two additional metadata fields.
 
 ```{r}
-out.lst <- list(output(id = "random",
-                       type = "file",
-                       label = "output",
-                       description = "random number file",
-                       glob = "*.txt"),
-                output(id = "report",
-                       type = "file",
-                       label = "report",
-                       glob = "*.html",
-                       inheritMetadataFrom = "bam_file",
-                       metadata = list(author = "tengfei",
-                                       sample = "random")))
+out.lst <- list(
+  output(
+    id = "random",
+    type = "file",
+    label = "output",
+    description = "random number file",
+    glob = "*.txt"
+  ),
+  output(
+    id = "report",
+    type = "file",
+    label = "report",
+    glob = "*.html",
+    inheritMetadataFrom = "bam_file",
+    metadata = list(
+      author = "RFranklin",
+      sample = "random"
+    )
+  )
+)
 out.lst
 ```
 
@@ -496,27 +580,26 @@ out.lst
 
 ```{r, eval = TRUE, comment=''}
 fl <- system.file("docker/rnaseqGene/rabix", "generator.R", package = "sevenbridges")
-cat(readLines(fl), sep = '\n')
+cat(readLines(fl), sep = "\n")
 ```
 
 Note the stageInput example in the above script, you can set it to "copy" or "link".
-
 
 **Input node batch mode**
 
 Batch by File (the long output has been omitted here):
 
 ```{r, results = 'hide'}
-f1 = system.file("extdata/app", "flow_star.json", package = "sevenbridges")
-f1 = convert_app(f1)
+f1 <- system.file("extdata/app", "flow_star.json", package = "sevenbridges")
+f1 <- convert_app(f1)
 f1$set_batch("sjdbGTFfile", type = "ITEM")
 ```
 
 Batch by other critieria such as metadta, following example, is using `sample_id` and `library_id` (the long output has been omitted here):
 
 ```{r, results = 'hide'}
-f1 = system.file("extdata/app", "flow_star.json", package = "sevenbridges")
-f1 = convert_app(f1)
+f1 <- system.file("extdata/app", "flow_star.json", package = "sevenbridges")
+f1 <- convert_app(f1)
 f1$set_batch("sjdbGTFfile", c("metadata.sample_id", "metadata.library_id"))
 ```
 
@@ -524,15 +607,15 @@ When you push your app to the platform, you will see the batch available at task
 
 # Describe Wokrflow in R
 
-***Note:*** The [GUI Tool Editor](https://docs.sevenbridges.com/docs/the-tool-editor) on Seven Bridges Platform is more conventient for this purpose.
+**Note**: The [GUI Tool Editor](https://docs.sevenbridges.com/docs/the-tool-editor) on Seven Bridges Platform is more conventient for this purpose.
 
 ## Import from a JSON file
 
 Yes, you could use the same function `convert_app` to import JSON files.
 
 ```{r}
-f1 = system.file("extdata/app", "flow_star.json", package = "sevenbridges")
-f1 = convert_app(f1)
+f1 <- system.file("extdata/app", "flow_star.json", package = "sevenbridges")
+f1 <- convert_app(f1)
 # show it
 # f1
 ```
@@ -542,8 +625,8 @@ f1 = convert_app(f1)
 Just like `Tool` object, you also have convenient utils for it, especially useful when you execute task.
 
 ```{r}
-f1 = system.file("extdata/app", "flow_star.json", package = "sevenbridges")
-f1 = convert_app(f1)
+f1 <- system.file("extdata/app", "flow_star.json", package = "sevenbridges")
+f1 <- convert_app(f1)
 # input matrix
 head(f1$input_matrix())
 # by name
@@ -578,7 +661,7 @@ To create a workflow, we provide simple interface to pipe your tool into a singl
 - Simple linear tool connection and chaining
 - Connect flow with one or more tools
 
-__Note__ for complicated workflow construction, I highly recommend just use our graphical interface to do it, there is no better way.
+**Note**: for complicated workflow construction, I highly recommend just use our graphical interface to do it, there is no better way.
 
 ### Connect simple linear tools
 
@@ -591,50 +674,70 @@ Let's create tools from scratch to perform a simple task
 ```{r}
 library("sevenbridges")
 # A tool that generates 100 random numbers
-t1 <- Tool(id = "runif new test 3", label = "random number",
-           hints = requirements(docker(pull = "rocker/r-base")),
-           baseCommand = "Rscript -e 'x = runif(100); write.csv(x, file = 'random.txt', row.names = FALSE)'",
-           outputs = output(id = "random",
-                            type = "file",
-                            glob = "random.txt"))
+t1 <- Tool(
+  id = "runif new test 3", label = "random number",
+  hints = requirements(docker(pull = "rocker/r-base")),
+  baseCommand = "Rscript -e 'x = runif(100); write.csv(x, file = 'random.txt', row.names = FALSE)'",
+  outputs = output(
+    id = "random",
+    type = "file",
+    glob = "random.txt"
+  )
+)
 
 # A tool that takes log
-fd <- fileDef(name = "log.R",
-              content = "args = commandArgs(TRUE)
+fd <- fileDef(
+  name = "log.R",
+  content = "args = commandArgs(TRUE)
                          x = read.table(args[1], header = TRUE)[,'x']
                          x = log(x)
                          write.csv(x, file = 'random_log.txt', row.names = FALSE)
-                         ")
+                         "
+)
 
-t2 <- Tool(id = "log new test 3", label = "get log",
-           hints = requirements(docker(pull = "rocker/r-base")),
-           requirements = requirements(fd),
-           baseCommand = "Rscript log.R",
-           inputs = input(id = "number",
-                           type = "file"),
-           outputs = output(id = "log",
-                            type = "file",
-                            glob = "*.txt"))
+t2 <- Tool(
+  id = "log new test 3", label = "get log",
+  hints = requirements(docker(pull = "rocker/r-base")),
+  requirements = requirements(fd),
+  baseCommand = "Rscript log.R",
+  inputs = input(
+    id = "number",
+    type = "file"
+  ),
+  outputs = output(
+    id = "log",
+    type = "file",
+    glob = "*.txt"
+  )
+)
 
 # A tool that do a mean
-fd <- fileDef(name = "mean.R",
-              content = "args = commandArgs(TRUE)
+fd <- fileDef(
+  name = "mean.R",
+  content = "args = commandArgs(TRUE)
                          x = read.table(args[1], header = TRUE)[,'x']
                          x = mean(x)
-                         write.csv(x, file = 'random_mean.txt', row.names = FALSE)")
+                         write.csv(x, file = 'random_mean.txt', row.names = FALSE)"
+)
 
-t3 <- Tool(id = "mean new test 3", label = "get mean",
-           hints = requirements(docker(pull = "rocker/r-base")),
-           requirements = requirements(fd),
-           baseCommand = "Rscript mean.R",
-           inputs = input(id = "number",
-                           type = "file"),
-           outputs = output(id = "mean",
-                            type = "file",
-                            glob = "*.txt"))
+t3 <- Tool(
+  id = "mean new test 3", label = "get mean",
+  hints = requirements(docker(pull = "rocker/r-base")),
+  requirements = requirements(fd),
+  baseCommand = "Rscript mean.R",
+  inputs = input(
+    id = "number",
+    type = "file"
+  ),
+  outputs = output(
+    id = "mean",
+    type = "file",
+    glob = "*.txt"
+  )
+)
 
-f = t1 %>>% t2
-f = link(t1, t2, "#random", "#number")
+f <- t1 %>>% t2
+f <- link(t1, t2, "#random", "#number")
 
 # # you cannot directly copy-paste it
 # # please push it using API, we will register each tool for you
@@ -642,22 +745,28 @@ f = link(t1, t2, "#random", "#number")
 # library("clipr")
 # write_clip(f$toJSON(pretty = TRUE))
 
-t2 <- Tool(id = "log new test 3", label = "get log",
-           hints = requirements(docker(pull = "rocker/r-base")),
-           requirements = requirements(fd),
-           baseCommand = "Rscript log.R",
-           inputs = input(id = "number",
-                          type = "file",
-                          secondaryFiles = sevenbridges:::set_box(".bai")),
-           outputs = output(id = "log",
-                            type = "file",
-                            glob = "*.txt"))
+t2 <- Tool(
+  id = "log new test 3", label = "get log",
+  hints = requirements(docker(pull = "rocker/r-base")),
+  requirements = requirements(fd),
+  baseCommand = "Rscript log.R",
+  inputs = input(
+    id = "number",
+    type = "file",
+    secondaryFiles = sevenbridges:::set_box(".bai")
+  ),
+  outputs = output(
+    id = "log",
+    type = "file",
+    glob = "*.txt"
+  )
+)
 
 # library("clipr")
 # write_clip(t2$toJSON(pretty = TRUE))
 ```
 
-__Note__: this workflow contains tools that do not exist on the platform, so if you directly copy and paste the JSON into the GUI, it won't work properly, however, a simple way is to push your app to platform via API. This will add new tools one by one to your project before add your workflow app on the platform. Alternative if you connect two tools you know they exist on the platform, you don't need to do so.
+**Note**: this workflow contains tools that do not exist on the platform, so if you directly copy and paste the JSON into the GUI, it won't work properly, however, a simple way is to push your app to platform via API. This will add new tools one by one to your project before add your workflow app on the platform. Alternative if you connect two tools you know they exist on the platform, you don't need to do so.
 
 ```{r, eval = FALSE}
 # auto-check tool info and push new tools
@@ -676,22 +785,25 @@ Checking potential mapping is easy with function `link_what`, it will print matc
 If you don't specify which input/ouput to expose at flow level for new `Flow` object, it will expose all availabl ones and print the message, otherwise, please provide parameters for `flow_input` and `flow_output` with full id.
 
 ```{r}
-t1 = system.file("extdata/app", "tool_unpack_fastq.json",
-                 package = "sevenbridges")
-t2 = system.file("extdata/app", "tool_star.json",
-                 package = "sevenbridges")
-t1 = convert_app(t1)
-t2 = convert_app(t2)
+t1 <- system.file("extdata/app", "tool_unpack_fastq.json",
+  package = "sevenbridges"
+)
+t2 <- system.file("extdata/app", "tool_star.json",
+  package = "sevenbridges"
+)
+t1 <- convert_app(t1)
+t2 <- convert_app(t2)
 # check possible link
 link_what(t1, t2)
 # link
-f1 = link(t1, t2, "output_fastq_files", "reads")
+f1 <- link(t1, t2, "output_fastq_files", "reads")
 # link
 t1$output_id(TRUE)
 t2$input_id(TRUE)
-f2 = link(t1, t2, "output_fastq_files", "reads",
-          flow_input = "#SBG_Unpack_FASTQs.input_archive_file",
-          flow_output = "#STAR.log_files")
+f2 <- link(t1, t2, "output_fastq_files", "reads",
+  flow_input = "#SBG_Unpack_FASTQs.input_archive_file",
+  flow_output = "#STAR.log_files"
+)
 
 # library("clipr")
 # write_clip(f2$toJSON())
@@ -700,19 +812,19 @@ f2 = link(t1, t2, "output_fastq_files", "reads",
 ### Connecting tool with workflow by input and output id
 
 ```{r}
-tool.in = system.file("extdata/app", "tool_unpack_fastq.json", package = "sevenbridges")
-flow.in = system.file("extdata/app", "flow_star.json", package = "sevenbridges")
+tool.in <- system.file("extdata/app", "tool_unpack_fastq.json", package = "sevenbridges")
+flow.in <- system.file("extdata/app", "flow_star.json", package = "sevenbridges")
 
-t1 = convert_app(tool.in)
-f2 = convert_app(flow.in)
+t1 <- convert_app(tool.in)
+f2 <- convert_app(flow.in)
 # consulting link_what first
 f2$link_map()
 # then link
 
-f3 = link(t1, f2, c("output_fastq_files"), c("#SBG_FASTQ_Quality_Detector.fastq"))
+f3 <- link(t1, f2, c("output_fastq_files"), c("#SBG_FASTQ_Quality_Detector.fastq"))
 
 link_what(f2, t1)
-f4 = link(f2, t1, c("#Picard_SortSam.sorted_bam", "#SBG_FASTQ_Quality_Detector.result"), c("#input_archive_file", "#input_archive_file"))
+f4 <- link(f2, t1, c("#Picard_SortSam.sorted_bam", "#SBG_FASTQ_Quality_Detector.result"), c("#input_archive_file", "#input_archive_file"))
 
 # # TODO
 # # all outputs
@@ -737,14 +849,16 @@ With API function, you can directly load your Tool into the account. Run a task,
 Here is a quick demo:
 
 ```{r, eval = FALSE}
-a = Auth(platform = "platform_name", token = "your_token")
-p = a$project("demo")
-app.runif = p$app_add("runif555", rbx)
-aid = app.runif$id
-tsk = p$task_add(name        = "Draft runif simple",
-                 description = "Description for runif",
-                 app         = aid,
-                 inputs      = list(min = 1, max = 10))
+a <- Auth(platform = "platform_name", token = "your_token")
+p <- a$project("demo")
+app.runif <- p$app_add("runif555", rbx)
+aid <- app.runif$id
+tsk <- p$task_add(
+  name = "Draft runif simple",
+  description = "Description for runif",
+  app = aid,
+  inputs = list(min = 1, max = 10)
+)
 tsk$run()
 ```
 
@@ -752,16 +866,16 @@ tsk$run()
 
 **1. From CLI**
 
-While developing tools it is useful to test them locally first. For that we can use rabix -- reproducible analyses for bioinformatics, https://github.com/rabix. To test your tool with latest implementation of rabix in Java (called **bunny**) you could use the Docker image **tengfei/testenv**:
+While developing tools it is useful to test them locally first. For that we can use rabix -- reproducible analyses for bioinformatics, https://github.com/rabix. To test your tool with latest implementation of rabix in Java (called **bunny**) you could use the Docker image `RFranklin/testenv`:
 
 ```bash
-docker pull tengfei/testenv
+docker pull RFranklin/testenv
 ```
 
 Dump your rabix tool as JSON into dir which also contains input data. `write(rbx$toJSON, file="<data_dir>/<tool>.json")`. Make **inputs.json** file to declare input parameters in the same directory (you can use relative paths from inputs.json to data). Create container:
 
 ```bash
-docker run --privileged --name bunny -v </path/to/data_dir>:/bunny_data -dit tengfei/testenv
+docker run --privileged --name bunny -v </path/to/data_dir>:/bunny_data -dit RFranklin/testenv
 ```
 
 Execute tool
@@ -772,36 +886,43 @@ docker exec bunny bash -c 'cd /opt/bunny && ./rabix.sh -e /bunny_data /bunny_dat
 
 You'll see running logs from within container, and also output dir inside <data_dir> in home system.
 
-NOTE 1: tengfei/testenv has R, python, Java... so many tools can work without Docker requirement set. If you however set Docker requirement you need to pull image inside container first to run docker container inside running bunny docker.
-
-NOTE 2: inputs.json can also be inputs.yaml if you find it easier to declare inputs in YAML.
+- **Note 1**: `RFranklin/testenv` has R, Python, Java... so many tools can work without Docker requirement set. If you however set Docker requirement you need to pull image inside container first to run Docker container inside running bunny Docker.
+- **Note 2**: inputs.json can also be inputs.yaml if you find it easier to declare inputs in YAML.
 
 **2. From R**
 
 ```{r, eval = FALSE}
 library("sevenbridges")
 
-in.df <- data.frame(id = c("number", "min", "max", "seed"),
-                    description = c("number of observation",
-                                    "lower limits of the distribution",
-                                    "upper limits of the distribution",
-                                    "seed with set.seed"),
-                    type = c("integer", "float", "float", "float"),
-                    label = c("number" ,"min", "max", "seed"),
-                    prefix = c("--n", "--min", "--max", "--seed"),
-                    default = c(1, 0, 10, 123),
-                    required = c(TRUE, FALSE, FALSE, FALSE))
-out.df <- data.frame(id = c("random", "report"),
-                     type = c("file", "file"),
-                     glob = c("*.txt", "*.html"))
-rbx <- Tool(id = "runif",
-            label = "Random number generator",
-            hints = requirements(docker(pull = "tengfei/runif"), cpu(1), mem(2000)),
-            baseCommand = "runif.R",
-            inputs = in.df,  # or ins.df
-            outputs = out.df)
+in.df <- data.frame(
+  id = c("number", "min", "max", "seed"),
+  description = c(
+    "number of observation",
+    "lower limits of the distribution",
+    "upper limits of the distribution",
+    "seed with set.seed"
+  ),
+  type = c("integer", "float", "float", "float"),
+  label = c("number", "min", "max", "seed"),
+  prefix = c("--n", "--min", "--max", "--seed"),
+  default = c(1, 0, 10, 123),
+  required = c(TRUE, FALSE, FALSE, FALSE)
+)
+out.df <- data.frame(
+  id = c("random", "report"),
+  type = c("file", "file"),
+  glob = c("*.txt", "*.html")
+)
+rbx <- Tool(
+  id = "runif",
+  label = "Random number generator",
+  hints = requirements(docker(pull = "RFranklin/runif"), cpu(1), mem(2000)),
+  baseCommand = "runif.R",
+  inputs = in.df, # or ins.df
+  outputs = out.df
+)
 params <- list(number = 3, max = 5)
 
-set_test_env("tengfei/testenv", "mount_dir")
+set_test_env("RFranklin/testenv", "mount_dir")
 test_tool(rbx, params)
 ```
