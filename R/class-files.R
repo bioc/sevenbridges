@@ -1,3 +1,4 @@
+# Files class ------------------------------------------------------------------
 .response_files <- c(
   "id", "name", "size", "project",
   "created_on", "modified_on", "storage",
@@ -27,10 +28,10 @@
 #' @field metadata a list for metadata associated with the file
 #' @field url file download url
 #' @field parent parent folder ID
-#' @field type "FILE" or "FOLDER"
+#' @field type \code{"FILE"} or \code{"FOLDER"}
 #'
-#' @note In sevenbridges package version <= 1.5.4, the \code{Files} class
-#' inherits from the \code{File} class defined in CWL. To avoid confusion,
+#' @note In the sevenbridges package version <= 1.5.4, the \code{Files} class
+#' inherited from the \code{File} class defined in CWL. To avoid confusion,
 #' in the current implementation, they are defined separately and not
 #' coupled anymore.
 #'
@@ -60,19 +61,13 @@ Files <- setRefClass(
   ),
 
   methods = list(
-    initialize = function(id = NULL,
-                              name = NULL,
-                              size = NULL,
-                              project = NULL,
-                              created_on = NULL,
-                              modified_on = NULL,
-                              storage = list(),
-                              origin = list(),
-                              tags = list(),
-                              metadata = list(),
-                              url = NULL,
-                              parent = NULL,
-                              type = NULL, ...) {
+
+    # initialize ---------------------------------------------------------------
+    initialize = function(id = NULL, name = NULL, size = NULL, project = NULL,
+                              created_on = NULL, modified_on = NULL,
+                              storage = list(), origin = list(), tags = list(),
+                              metadata = list(), url = NULL,
+                              parent = NULL, type = NULL, ...) {
       id <<- id
       name <<- name
       size <<- size
@@ -90,6 +85,7 @@ Files <- setRefClass(
       callSuper(...)
     },
 
+    # delete -------------------------------------------------------------------
     delete = function() {
       auth$api(
         path = paste0("files/", id),
@@ -97,6 +93,7 @@ Files <- setRefClass(
       )
     },
 
+    # download -----------------------------------------------------------------
     download_url = function() {
       auth$api(
         path = paste0(
@@ -133,6 +130,7 @@ Files <- setRefClass(
       download.file(url, destfile, ..., method = method)
     },
 
+    # copy ---------------------------------------------------------------------
     copyTo = function(project = NULL, name = NULL) {
       auth$copyFile(id, project = project, name = name)
     },
@@ -143,6 +141,7 @@ Files <- setRefClass(
       copyTo(project = project, name = name)
     },
 
+    # name, metadata, and tags -------------------------------------------------
     meta = function() {
       "get metadata from a file"
 
@@ -236,8 +235,7 @@ Files <- setRefClass(
       set_tag(x, overwrite = FALSE, ...)
     },
 
-    update = function(name = NULL, metadata = NULL,
-                          tags = NULL) {
+    update = function(name = NULL, metadata = NULL, tags = NULL) {
       "This call updates the name, the full set metadata, and tags for a specified file."
 
       body <- list(name = name, metadata = metadata, tags = tags)
@@ -263,12 +261,130 @@ Files <- setRefClass(
       res
     },
 
-    show = function() {
-      .showFields(.self, "== Files ==", .response_files)
-    }
+    # folders ------------------------------------------------------------------
+    # create a new folder under the parent folder
+    create_folder = function(name, ...) {
+      if (is.null(name)) {
+        stop("Please provide the new folder name")
+      }
+
+      if (substr(name, 1, 2) == "__") {
+        stop("The folder name cannot start with \"__\"")
+      }
+
+      if (.self$type != "folder") {
+        stop("Object must have type \"folder\", not \"file\" or others")
+      }
+
+      req <- auth$api(
+        path = "files", method = "POST",
+        body = list("name" = name, "parent" = .self$id, "type" = "FOLDER"), ...
+      )
+
+      res <- .asFiles(req)
+      res$auth <- .self$auth
+
+      res
+    },
+
+    # get object type ("file" or "folder")
+    typeof = function() {
+      .self$type
+    },
+
+    # list folder contents (return files, folders, or both)
+    list_folder_contents = function(type = c("file", "folder"), ...) {
+      if (.self$type != "folder") {
+        stop("Object must have type \"folder\", not \"file\" or others")
+      }
+
+      req <- auth$api(
+        path = paste0("files/", .self$id, "/list"), method = "GET", ...
+      )
+
+      if (length(req$items) == 0L) return(NULL)
+
+      res <- .asFilesList(req)
+      for (i in 1L:length(res)) res[[i]]$auth <- .self$auth
+
+      # keep only files or folders
+      if (length(type) == 1L) {
+        types <- sapply(res, function(x) x$typeof())
+        if (type == "file") {
+          idx <- which(types == "file")
+        }
+        if (type == "folder") {
+          idx <- which(types == "folder")
+        }
+        res <- res[idx]
+      }
+
+      res
+    },
+
+    # get the parent folder ID of the current file/folder
+    get_parent_folder_id = function() {
+      .self$parent
+    },
+
+    # get the parent folder object of the current file/folder
+    get_parent_folder = function() {
+      req <- auth$file(id = .self$parent)
+      res <- .asFiles(req)
+      res$auth <- .self$auth
+      res
+    },
+
+    # copy a file to a folder
+    copy_to_folder = function(folder_id, name_new = NULL, ...) {
+      if (!is.character(folder_id)) stop("Folder ID must be character")
+
+      if (is.null(name_new)) {
+        req <- auth$api(
+          path = paste0("files/", .self$id, "/actions/copy"), method = "POST",
+          body = list("parent" = folder_id), ...
+        )
+      } else {
+        req <- auth$api(
+          path = paste0("files/", .self$id, "/actions/copy"), method = "POST",
+          body = list("parent" = folder_id, "name" = name_new), ...
+        )
+      }
+
+      res <- .asFiles(req)
+      res$auth <- .self$auth
+
+      res
+    },
+
+    # move a file to a folder
+    move_to_folder = function(folder_id, name_new = NULL, ...) {
+      if (!is.character(folder_id)) stop("Folder ID must be character")
+
+      if (is.null(name_new)) {
+        req <- auth$api(
+          path = paste0("files/", .self$id, "/actions/move"), method = "POST",
+          body = list("parent" = folder_id), ...
+        )
+      } else {
+        req <- auth$api(
+          path = paste0("files/", .self$id, "/actions/move"), method = "POST",
+          body = list("parent" = folder_id, "name" = name_new), ...
+        )
+      }
+
+      res <- .asFiles(req)
+      res$auth <- .self$auth
+
+      res
+    },
+
+    # show ---------------------------------------------------------------------
+    show = function() .showFields(.self, "== Files ==", .response_files)
   )
 )
 
+# .asFiles ---------------------------------------------------------------------
 .asFiles <- function(x) {
   Files(
     id = x$id,
@@ -288,6 +404,7 @@ Files <- setRefClass(
   )
 }
 
+# FilesList class --------------------------------------------------------------
 #' @rdname Files-class
 #' @export FilesList
 #' @aliases FilesList-class
@@ -295,6 +412,7 @@ Files <- setRefClass(
 #' @exportClass FilesList
 FilesList <- setListClass("Files", contains = "Item0")
 
+# .asFilesList -----------------------------------------------------------------
 .asFilesList <- function(x) {
   obj <- FilesList(lapply(x$items, .asFiles))
   obj@href <- x$href
@@ -302,9 +420,9 @@ FilesList <- setListClass("Files", contains = "Item0")
   obj
 }
 
-#' Delete files
+#' Delete files or folders
 #'
-#' Delete files
+#' Delete files or folders
 #'
 #' @param obj single File or FileList
 #'
