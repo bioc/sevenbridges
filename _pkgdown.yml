@@ -1,11 +1,10 @@
 template:
   params:
-    bootswatch: cosmo
+    bootswatch: flatly
     ganalytics: UA-87185344-1
 
 navbar:
   title: "sevenbridges-r"
-  type: inverse
 
 reference:
   - title: "API Client"
@@ -74,7 +73,6 @@ reference:
       - input_matrix
       - output_matrix
       - Tool-class
-      - ToolUI
       - test_tool_rabix
       - test_tool_cwlrun
       - test_tool_bunny

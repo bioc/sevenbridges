@@ -188,10 +188,10 @@ fd <- fileDef(
 
 # read via reader
 .srcfile <- system.file("docker/sevenbridges/src/runif.R", package = "sevenbridges")
-library("readr")
+
 fd <- fileDef(
   name = "runif.R",
-  content = read_file(.srcfile)
+  content = readr::read_file(.srcfile)
 )
 
 # add script to your tool
@@ -211,10 +211,10 @@ How about multiple script?
 ```{r}
 # or simply readLines
 .srcfile <- system.file("docker/sevenbridges/src/runif.R", package = "sevenbridges")
-library("readr")
+
 fd1 <- fileDef(
   name = "runif.R",
-  content = read_file(.srcfile)
+  content = readr::read_file(.srcfile)
 )
 fd2 <- fileDef(
   name = "runif2.R",
@@ -393,10 +393,9 @@ Ignore the comment part, I will introduce spin/stich later.
 Then just describe my tool in this way, add your script as you learned in previous sections.
 
 ```{r}
-library("readr")
 fd <- fileDef(
   name = "runif.R",
-  content = read_file(fl)
+  content = readr::read_file(fl)
 )
 
 rbx <- Tool(
@@ -446,10 +445,9 @@ cat(readLines(fl), sep = "\n")
 Then just describe my tool in this way, note, I use `separate=FALSE` and add `=` to my prefix as a hack.
 
 ```{r}
-library("readr")
 fd <- fileDef(
   name = "runif.R",
-  content = read_file(fl)
+  content = readr::read_file(fl)
 )
 
 rbx <- Tool(
@@ -505,10 +503,9 @@ Rscript -e "rmarkdown::render(knitr::spin('runif_args.R', FALSE))" --args --n=10
 And so I describe my tool like this with Docker image `rocker/tidyverse` which contians the knitr and rmarkdown packages.
 
 ```{r}
-library("readr")
 fd <- fileDef(
   name = "runif.R",
-  content = read_file(fl)
+  content = readr::read_file(fl)
 )
 
 rbx <- Tool(
@@ -744,9 +741,7 @@ f <- link(t1, t2, "#random", "#number")
 
 # # you cannot directly copy-paste it
 # # please push it using API, we will register each tool for you
-
-# library("clipr")
-# write_clip(f$toJSON(pretty = TRUE))
+# clipr::write_clip(jsonlite::toJSON(f, pretty = TRUE))
 
 t2 <- Tool(
   id = "log new test 3", label = "get log",
@@ -765,11 +760,10 @@ t2 <- Tool(
   )
 )
 
-# library("clipr")
-# write_clip(t2$toJSON(pretty = TRUE))
+# clipr::write_clip(jsonlite::toJSON(t2, pretty = TRUE))
 ```
 
-**Note**: this workflow contains tools that do not exist on the platform, so if you directly copy and paste the JSON into the GUI, it won't work properly, however, a simple way is to push your app to platform via API. This will add new tools one by one to your project before add your workflow app on the platform. Alternative if you connect two tools you know they exist on the platform, you don't need to do so.
+**Note**: this workflow contains tools that do not exist on the platform, so if you copy and paste the JSON directly into the GUI, it won't work properly. However, a simple way is to push your app to the platform via API. This will add new tools one by one to your project before add your workflow app on the platform. Alternatively, if you connect two tools you know that exist on the platform, you don't need to do so.
 
 ```{r, eval = FALSE}
 # auto-check tool info and push new tools
@@ -808,8 +802,7 @@ f2 <- link(t1, t2, "output_fastq_files", "reads",
   flow_output = "#STAR.log_files"
 )
 
-# library("clipr")
-# write_clip(f2$toJSON())
+# clipr::write_clip(jsonlite::toJSON(f2))
 ```
 
 ### Connecting tool with workflow by input and output id
@@ -833,8 +826,7 @@ f4 <- link(f2, t1, c("#Picard_SortSam.sorted_bam", "#SBG_FASTQ_Quality_Detector.
 # # all outputs
 # # flow + flow
 # # print message when name wrong
-# library("clipr")
-# write_clip(f4$toJSON())
+# clipr::write_clip(jsonlite::toJSON(f4))
 ```
 
 ### Using pipe to construct complicated workflow
