@@ -3,7 +3,7 @@
   "id", "name", "size", "project",
   "created_on", "modified_on", "storage",
   "origin", "tags", "metadata", "url",
-  "parent", "type"
+  "parent", "type", "description"
 )
 
 #' Class Files
@@ -29,6 +29,7 @@
 #' @field url file download url
 #' @field parent parent folder ID
 #' @field type \code{"FILE"} or \code{"FOLDER"}
+#' @field description file description
 #'
 #' @note In the sevenbridges package version <= 1.5.4, the \code{Files} class
 #' inherited from the \code{File} class defined in CWL. To avoid confusion,
@@ -57,7 +58,8 @@ Files <- setRefClass(
     metadata = "listORNULL",
     url = "characterORNULL",
     parent = "characterORNULL",
-    type = "characterORNULL"
+    type = "characterORNULL",
+    description = "characterORNULL"
   ),
 
   methods = list(
@@ -67,7 +69,8 @@ Files <- setRefClass(
                               created_on = NULL, modified_on = NULL,
                               storage = list(), origin = list(), tags = list(),
                               metadata = list(), url = NULL,
-                              parent = NULL, type = NULL, ...) {
+                              parent = NULL, type = NULL,
+                              description = NULL, ...) {
       id <<- id
       name <<- name
       size <<- size
@@ -81,6 +84,7 @@ Files <- setRefClass(
       url <<- url
       parent <<- parent
       type <<- type
+      description <<- description
 
       callSuper(...)
     },
@@ -262,8 +266,8 @@ Files <- setRefClass(
     },
 
     # folders ------------------------------------------------------------------
-    # create a new folder under the parent folder
     create_folder = function(name, ...) {
+      "Create a new folder under the parent folder."
       if (is.null(name)) {
         stop("Please provide the new folder name")
       }
@@ -287,13 +291,13 @@ Files <- setRefClass(
       res
     },
 
-    # get object type ("file" or "folder")
     typeof = function() {
+      "Get object type (\"file\" or \"folder\")."
       .self$type
     },
 
-    # list folder contents (return files, folders, or both)
     list_folder_contents = function(type = c("file", "folder"), ...) {
+      "List folder contents (return files, folders, or both)."
       if (.self$type != "folder") {
         stop("Object must have type \"folder\", not \"file\" or others")
       }
@@ -322,21 +326,21 @@ Files <- setRefClass(
       res
     },
 
-    # get the parent folder ID of the current file/folder
     get_parent_folder_id = function() {
+      "Get the parent folder ID of the current file/folder."
       .self$parent
     },
 
-    # get the parent folder object of the current file/folder
     get_parent_folder = function() {
+      "Get the parent folder object of the current file/folder."
       req <- auth$file(id = .self$parent)
       res <- .asFiles(req)
       res$auth <- .self$auth
       res
     },
 
-    # copy a file to a folder
     copy_to_folder = function(folder_id, name_new = NULL, ...) {
+      "Copy a file to a folder."
       if (!is.character(folder_id)) stop("Folder ID must be character")
 
       if (is.null(name_new)) {
@@ -357,8 +361,8 @@ Files <- setRefClass(
       res
     },
 
-    # move a file to a folder
     move_to_folder = function(folder_id, name_new = NULL, ...) {
+      "Move a file to a folder."
       if (!is.character(folder_id)) stop("Folder ID must be character")
 
       if (is.null(name_new)) {
@@ -374,6 +378,65 @@ Files <- setRefClass(
       }
 
       res <- .asFiles(req)
+      res$auth <- .self$auth
+
+      res
+    },
+
+    # markers ------------------------------------------------------------------
+    marker = function(id = NULL, ...) {
+      "List markers available on a file or get details for a marker."
+      if (is.null(id)) {
+        req <- auth$api(
+          path = paste0("genome/markers?file=", .self$id),
+          method = "GET", ...
+        )
+      } else {
+        req <- auth$api(
+          path = paste0("genome/markers/", id),
+          method = "GET", ...
+        )
+      }
+
+      # no markers
+      if ((length(req$items) == 0L) & is.null(req$id)) {
+        return(NULL)
+      }
+
+      # one marker
+      if (length(req$items) != 0L | !is.null(req$id)) {
+        res <- .asMarker(req)
+        res$auth <- .self$auth
+      }
+
+      # multiple markers
+      if (length(req$items) != 0L & is.null(req$id)) {
+        res <- .asMarkerList(req)
+        setAuth(res, .self$auth, "Marker")
+      }
+
+      res
+    },
+
+    create_marker = function(name = NULL, start = NULL, end = NULL,
+                                 chromosome = NULL, private = TRUE, ...) {
+      "Create a marker."
+      if (is.null(name) | is.null(start) | is.null(end)) {
+        stop("Please provide the marker name and position (start and end)")
+      }
+
+      req <- auth$api(
+        path = "genome/markers", method = "POST",
+        body = list(
+          "file" = .self$id,
+          "name" = name,
+          "position" = list("start" = start, "end" = end),
+          "chromosome" = chromosome,
+          "private" = private
+        ), ...
+      )
+
+      res <- .asMarker(req)
       res$auth <- .self$auth
 
       res
@@ -400,6 +463,7 @@ Files <- setRefClass(
     url = x$url,
     parent = x$parent,
     type = x$type,
+    description = x$description,
     response = response(x)
   )
 }
