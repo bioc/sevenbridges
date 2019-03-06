@@ -651,38 +651,40 @@ Running tasks with [spot instances](https://docs.sevenbridges.com/docs/about-spo
 could potentially [reduce a considerable amount of computational cost](https://www.sevenbridges.com/spot-instances-cost-reduction/).
 This option can be controlled on the project level or the task level on Seven Bridges platforms.
 Our package follows the same [logic](https://docs.sevenbridges.com/docs/use-spot-instances)
-as our platform's web interface.
+as our platform's web interface (the current default setting for spot instances is **on**).
 
 For example, when we create a project using `project_new()`,
-we can set `use_interruptible = TRUE` (it is `FALSE` by default):
+we can set `use_interruptible = FALSE` to use on-demand instances
+(non-interruptible but more expensive) instead of the spot instances
+(interruptible but cheaper):
 
 ```{r}
 p <- a$project_new(
-  name = "spot-enabled-project", bid, description = "spot enabled project",
-  use_interruptible = TRUE
+  name = "spot-disabled-project", bid, description = "spot disabled project",
+  use_interruptible = FALSE
 )
 ```
 
-Then all the new tasks created under this project will use spot instances to run
-**by default**, unless an argument `use_interruptible_instances` is specifically
-set to `FALSE` when drafting the new task using `task_add()`.
+Then all the new tasks created under this project will use on-demand instances
+to run **by default**, unless an argument `use_interruptible_instances`
+is specifically set to `TRUE` when drafting the new task using `task_add()`.
 
-For example, if `p` is the above spot enable project, to draft
-a task that will **not** use spot instances to run:
+For example, if `p` is the above spot disabled project, to draft
+a task that will use spot instances to run:
 
 ```{r}
 tsk <- p$task_add(
-  name = paste0("spot disabled task in a spot enabled project"),
-  description = "spot disabled task",
+  name = paste0("spot enabled task in a spot disabled project"),
+  description = "spot enabled task",
   app = ...,
   inputs = list(...),
-  use_interruptible_instances = FALSE
+  use_interruptible_instances = TRUE
 )
 ```
 
-Conversely, you can have a spot instance option disabled project,
-but draft and run specific tasks using the spot instances,
-by setting `use_interruptible_instances = TRUE` in `task_add()` explicitly.
+Conversely, you can have a spot instance option enabled project,
+but draft and run specific tasks using on-demand instances,
+by setting `use_interruptible_instances = FALSE` in `task_add()` explicitly.
 
 ## Execution hints per task run
 
@@ -1488,13 +1490,15 @@ a$copyFile(c(fid, fid2), project = pid)
 a$project(id = pid)$file()
 ```
 
-***NOTE:*** To copy a group of files, you need the `Auth$copyFile()` interface. The `id` of the files in your project will be different from their `id` in the Public Files repository.
+**NOTE:** To copy a group of files, you need the `Auth$copyFile()` interface. The `id` of the files in your project will be different from their `id` in the Public Files repository.
 
 Alternatively, you copy a __single file__ as shown below.
 
 ```{r}
 a$project("hello")$file(id = fid)$copyTo(pid)
 ```
+
+Notably, if you have a number of files to copy between projects, we would always recommend using the `Auth$bulk_file_copy()` method described in the Actions API section below, to batch copy the files in a single API call and save the number of API calls.
 
 <div align="right"><a href="#top">top</a></div>
 
@@ -2575,6 +2579,83 @@ a$public_app(name = "Control-FREEC", exact = TRUE, complete = TRUE)
 
 <div align="right"><a href="#top">top</a></div>
 
+## Actions
+
+The Actions API allows you to copy files between projects in batch or send feedback to Seven Bridges.
+
+### Copy files between projects
+
+This call allows you to copy files between projects. Unlike `a$copyFile()` or `file(...)$copyTo(...)` which only copy one file with each API call, this call lets you batch the copy operation and copy a list of files at a time.
+
+```{r}
+p <- a$project(id = "RFranklin/source-project")
+f <- p$file(complete = TRUE)
+# get all file IDs
+file_ids <- sapply(f, "[[", "id")
+# bulk copy files to the target project
+req <- a$bulk_file_copy(file_ids, "RFranklin/target-project")
+# print the response list
+(req <- unname(req))
+```
+
+```
+[[1]]
+[[1]]$status
+[1] "OK"
+
+[[1]]$new_file_id
+[1] "5bf31316e4b09b8ff39f9df7"
+
+[[1]]$new_file_name
+[1] "merged-tumor.converted.pe_1.fastq"
+
+...
+```
+
+We can use `sapply` to get the copy operation status, new file IDs, and (new) file names for the copied files:
+
+```{r}
+sapply(req, "[[", "status")
+```
+
+```
+[1] "OK" "OK" "OK" "OK"
+```
+
+```{r}
+sapply(req, "[[", "new_file_id")
+```
+
+```
+[1] "5bf31316e4b09b8ff39f9df7" "5bf31316e4b09b8ff39f9dfa" "5bf31316e4b09b8ff39f9df4" "5bf31316e4b09b8ff39f9df1"
+```
+
+```{r}
+sapply(req, "[[", "new_file_name")
+```
+
+```
+[1] "merged-tumor.converted.pe_1.fastq"  "merged-tumor.converted.pe_2.fastq"  "merged-normal.converted.pe_2.fastq"
+[4] "merged-normal.converted.pe_1.fastq"
+```
+
+Note that a file's ID is dependent on the project it is contained in. So, when you copy files from one project to another, their IDs will be different in the target project. The file names, however, do not change by copying, except where copying would yield non-unique file names in the target project.
+
+<div align="right"><a href="#top">top</a></div>
+
+### Send a feedback item
+
+Use this call to send feedbacks to Seven Bridges via the API. There are three feedback types available: `"idea"`, `"thought"`, or `"problem"`. You can send one feedback item per minute.
+
+```{r}
+a$send_feedback(
+  "This is a test for sending feedback via API. Please ignore this message.",
+  type = "thought"
+)
+```
+
+<div align="right"><a href="#top">top</a></div>
+
 ## Enterprise
 
 The Enterprise API allows you to manage your Enterprise on the Seven Bridges Platform via dedicated API calls.
@@ -2588,6 +2669,8 @@ Error: HTTP Status 400: Insufficient privileges to access this resource. Not a d
 ```
 
 If you see this error, first switch to the correct division context (use the dropdown menu in the upper left corner), then click the "Developer" tab, click "Auth token", generate the token, and use this token for API authentication.
+
+<div align="right"><a href="#top">top</a></div>
 
 ### List all divisions
 
@@ -2610,6 +2693,8 @@ name : The Division
 name : Another Division
 ```
 
+<div align="right"><a href="#top">top</a></div>
+
 ### Get details of a division
 
 To get the details (ID and name) of a division, for example, the first division listed above, use
@@ -2624,6 +2709,8 @@ To get the details (ID and name) of a division, for example, the first division 
 name : The Division
 ```
 
+<div align="right"><a href="#top">top</a></div>
+
 ### Create a team
 
 Let's create two new teams under this division:
@@ -2632,6 +2719,8 @@ Let's create two new teams under this division:
 team1 <- d$create_team(name = "New Team 1")
 team2 <- d$create_team(name = "New Team 2")
 ```
+
+<div align="right"><a href="#top">top</a></div>
 
 ### Get details of a team
 
@@ -2647,6 +2736,8 @@ id : 39f6cb44-9e3c-40e7-8639-3c0f3c1e4892
 name : New Team 1
 ```
 
+<div align="right"><a href="#top">top</a></div>
+
 ### Add a team member
 
 We can add division members to the teams we created. For example, let's add yourself (with the division username `the-division/your_username`) and another division member (with the division username `the-division/another_username`) to the first team. Also, let's add yourself to the second team:
@@ -2657,6 +2748,8 @@ team1$add_member("the-division/another_username")
 
 team2$add_member("the-division/your_username")
 ```
+
+<div align="right"><a href="#top">top</a></div>
 
 ### List team members
 
@@ -2685,6 +2778,8 @@ username : the-division/your_username
 role : ADMIN
 ```
 
+<div align="right"><a href="#top">top</a></div>
+
 ### Remove a team member
 
 Let's remove a user from the first team:
@@ -2692,6 +2787,8 @@ Let's remove a user from the first team:
 ```{r}
 team1$remove_member(m1[[1]]$username)
 ```
+
+<div align="right"><a href="#top">top</a></div>
 
 ### Rename a team
 
@@ -2709,6 +2806,8 @@ name : Another Team Name
 
 After renaming, the team will still have the same ID, just with a different name.
 
+<div align="right"><a href="#top">top</a></div>
+
 ### List your teams in the division
 
 To list the teams that you are a member of in a division, use
@@ -2719,6 +2818,8 @@ d$team()
 
 Note that there could be a one-minute delay in the backend here if you just added yourself to the teams seconds ago.
 
+<div align="right"><a href="#top">top</a></div>
+
 ### Delete a team
 
 To delete the teams we created, use
@@ -2726,6 +2827,119 @@ To delete the teams we created, use
 ```{r}
 team1$delete()
 team2$delete()
+```
+
+<div align="right"><a href="#top">top</a></div>
+
+## Markers
+
+The Markers API allows you to add, get, modify, and delete genetic markers on BAM files. These genetic markers can be then examined in the [Seven Bridges Genome Browser](https://docs.sevenbridges.com/v1.0/docs/seven-bridges-genome-browser).
+
+As of November 2018, the Markers API is still an Advance Access feature. To use this API, set the `advance_access` option to `TRUE`:
+
+```{r}
+opt <- getOption("sevenbridges")
+opt$advance_access <- TRUE
+options(sevenbridges = opt)
+```
+
+### Create a marker
+
+Let's create a new marker on a BAM file first:
+
+```{r}
+# locate the project
+p <- a$project(id = "RFranklin/api-markers")
+# search for files with `.bam` in their names
+f <- p$file(name = ".bam")
+# use the first BAM file
+f <- p$file(id = f[[1]]$id)
+
+# create two markers
+m1 <- f$create_marker("The First Marker", start = 21631232, end = 21631232)
+m2 <- f$create_marker("The Second Marker", start = 21631156, end = 21631158, chromosome = "chr7", private = FALSE)
+```
+
+The possible parameters for creating the marker include
+
+- The marker's name (`name`)
+- The marker's position (`start` and `end`)
+- Chromosome number (`chromosome`)
+- Whether the marker is private or public (`private`).
+
+The marker's name and its position are mandatory parameters, the others are optional.
+
+### List markers available on a file
+
+To list all markers on a file, use:
+
+```{r}
+f$marker()
+```
+
+```
+[[1]]
+== Marker ==
+id : 5bf478e5d38f185f0c23bc44
+name : The First Marker
+[[2]]
+== Marker ==
+id : 5bf478e6d38f185f0c23bc45
+name : The Second Marker
+```
+
+### Get details for a marker
+
+We can also check the details for a specific marker:
+
+```{r}
+marker_id <- m1$id
+f$marker(id = marker_id)
+```
+
+```
+== Marker ==
+id : 5bf478e5d38f185f0c23bc44
+name : The First Marker
+file : 5bf46c1be4b39b8f5232282e
+position:
+  start : 21631232
+  end : 21631232
+created_time : 2018-11-20T21:13:00Z
+created_by : RFranklin
+private : TRUE
+```
+
+### Modify a marker
+
+We can also modify the information of existing markers:
+
+```{r}
+(m1 <- m1$modify(name = "New Marker Name", end = 21631233, private = FALSE))
+```
+
+```
+== Marker ==
+id : 5bf478e5d38f185f0c23bc44
+name : New Marker Name
+file : 5bf46c1be4b39b8f5232282e
+position:
+  start : 21631232
+  end : 21631233
+created_time : 2018-11-20T21:13:00Z
+created_by : RFranklin
+private : FALSE
+```
+
+All of the five marker parameters mentioned above can be modified.
+
+### Delete a marker
+
+To delete the markers we just added, use
+
+```{r}
+m1$delete()
+m2$delete()
 ```
 
 ## Get Raw Response from httr

@@ -39,7 +39,6 @@
 #' # replace with your auth token
 #' token <- "your_token"
 #' a <- Auth(platform = "cgc", token = token)
-#'
 #' \dontrun{
 #' # Authentication with environment variables
 #' # This will read system environments variables
@@ -49,7 +48,8 @@
 #' # Authentication with user configuration file
 #' # This will load profile `default` from config
 #' # file `~/.sevenbridges/credentials` by default
-#' a <- Auth(from = "file")}
+#' a <- Auth(from = "file")
+#' }
 Auth <- setRefClass(
   "Auth",
   fields = list(
@@ -278,7 +278,112 @@ Auth <- setRefClass(
         }
       },
 
-    # project ------------------------------------------------------------------
+    # api paths ----------------------------------------------------------------
+    api = function(..., limit = getOption("sevenbridges")$"limit",
+                       offset = getOption("sevenbridges")$"offset",
+                       fields = NULL, complete = FALSE) {
+      "This call returns all API paths, and pass arguments to api() function with input token and url automatically"
+
+      req <- sevenbridges::api(token,
+        base_url = url, limit = limit,
+        offset = offset, fields = fields, ...
+      )
+      req <- status_check(req)
+
+      if (complete) {
+        N <- as.numeric(headers(response(req))[["x-total-matching-query"]])
+        if (length(N)) .item <- length(req$items)
+        if (.item < N) {
+          pb <- txtProgressBar(min = 1, max = N %/% 100 + 1, style = 3)
+          res <- NULL
+
+          for (i in 1:(N %/% 100 + 1)) {
+            .limit <- 100
+            .offset <- (i - 1) * 100
+            req <- sevenbridges::api(
+              token,
+              base_url = url,
+              limit = .limit, offset = .offset,
+              fields = fields, ...
+            )
+            req <- status_check(req)
+            res$items <- c(res$items, req$items)
+            setTxtProgressBar(pb, i)
+          }
+          cat("\n")
+          res$href <- NULL
+        } else {
+          return(req)
+        }
+        return(res)
+      } else {
+        return(req)
+      }
+    },
+
+    # user ---------------------------------------------------------------------
+    user = function(username = NULL, ...) {
+      "This call returns information about the authenticated user."
+
+      if (is.null(username)) {
+        req <- api(
+          token = token,
+          path = "user/",
+          method = "GET", ...
+        )
+        message("username not provided, showing the currently authenticated user information")
+      } else {
+        req <- api(
+          token = token,
+          path = paste0("users/", username),
+          method = "GET", ...
+        )
+      }
+
+      .asUser(req)
+    },
+
+    # billing ------------------------------------------------------------------
+    billing = function(id = NULL, breakdown = FALSE, ...) {
+      "If no id provided, This call returns a list of paths used to access billing information via the API. else, This call lists all your billing groups, including groups that are pending or have been disabled. If breakdown = TRUE, This call returns a breakdown of spending per-project for the billing group specified by billing_group. For each project that the billing group is associated with, information is shown on the tasks run, including their initiating user (the runner), start and end times, and cost."
+
+      if (is.null(id)) {
+        # show api
+        req <- api(path = "billing/groups", method = "GET", ...)
+        req <- .asBillingList(req)
+        if (length(req) == 1 && is(req, "SimpleList")) {
+          req <- req[[1]]
+        }
+
+        return(req)
+      } else {
+        if (breakdown) {
+          req <- api(
+            path = paste0("billing/groups/", id, "/breakdown"),
+            method = "GET", ...
+          )
+        } else {
+          req <- api(path = paste0("billing/groups/", id), method = "GET", ...)
+        }
+        req <- .asBilling(req)
+
+        return(req)
+      }
+    },
+
+    invoice = function(id = NULL, ...) {
+      "If no id provided, This call returns a list of invoices, with information about each, including whether or not the invoice is pending and the billing period it covers. The call returns information about all your available invoices, unless you use the query parameter bg_id to specify the ID of a particular billing group, in which case it will return the invoice incurred by that billing group only. If id was provided, This call retrieves information about a selected invoice, including the costs for analysis and storage, and the invoice period."
+
+      if (is.null(id)) {
+        req <- api(path = "billing/invoices", method = "GET", ...)
+      } else {
+        req <- api(path = paste0("billing/invoices/", id), method = "GET", ...)
+      }
+
+      req
+    },
+
+    # projects -----------------------------------------------------------------
     project_owner = function(owner = NULL, ...) {
       "List the projects owned by and accessible to a particular user. Each project's ID and URL will be returned."
 
@@ -403,69 +508,7 @@ Auth <- setRefClass(
       res
     },
 
-    # billing group ------------------------------------------------------------
-    billing = function(id = NULL, breakdown = FALSE, ...) {
-      "If no id provided, This call returns a list of paths used to access billing information via the API. else, This call lists all your billing groups, including groups that are pending or have been disabled. If breakdown = TRUE, This call returns a breakdown of spending per-project for the billing group specified by billing_group. For each project that the billing group is associated with, information is shown on the tasks run, including their initiating user (the runner), start and end times, and cost."
-
-      if (is.null(id)) {
-        # show api
-        req <- api(path = "billing/groups", method = "GET", ...)
-        req <- .asBillingList(req)
-        if (length(req) == 1 && is(req, "SimpleList")) {
-          req <- req[[1]]
-        }
-
-        return(req)
-      } else {
-        if (breakdown) {
-          req <- api(
-            path = paste0("billing/groups/", id, "/breakdown"),
-            method = "GET", ...
-          )
-        } else {
-          req <- api(path = paste0("billing/groups/", id), method = "GET", ...)
-        }
-        req <- .asBilling(req)
-
-        return(req)
-      }
-    },
-
-    invoice = function(id = NULL, ...) {
-      "If no id provided, This call returns a list of invoices, with information about each, including whether or not the invoice is pending and the billing period it covers. The call returns information about all your available invoices, unless you use the query parameter bg_id to specify the ID of a particular billing group, in which case it will return the invoice incurred by that billing group only. If id was provided, This call retrieves information about a selected invoice, including the costs for analysis and storage, and the invoice period."
-
-      if (is.null(id)) {
-        req <- api(path = "billing/invoices", method = "GET", ...)
-      } else {
-        req <- api(path = paste0("billing/invoices/", id), method = "GET", ...)
-      }
-
-      req
-    },
-
-    # user ---------------------------------------------------------------------
-    user = function(username = NULL, ...) {
-      "This call returns information about the authenticated user."
-
-      if (is.null(username)) {
-        req <- api(
-          token = token,
-          path = "user/",
-          method = "GET", ...
-        )
-        message("username not provided, showing the currently authenticated user information")
-      } else {
-        req <- api(
-          token = token,
-          path = paste0("users/", username),
-          method = "GET", ...
-        )
-      }
-
-      .asUser(req)
-    },
-
-    # file ---------------------------------------------------------------------
+    # files --------------------------------------------------------------------
     file = function(name = NULL, id = NULL, project = NULL, exact = FALSE,
                         detail = FALSE, metadata = list(), origin.task = NULL,
                         tag = NULL, complete = FALSE,
@@ -627,7 +670,7 @@ Auth <- setRefClass(
       copyFile(id = id, project = project, name = name)
     },
 
-    # app ----------------------------------------------------------------------
+    # apps ---------------------------------------------------------------------
     app = function(name = NULL, id = NULL, exact = FALSE, ignore.case = TRUE,
                        detail = FALSE, project = NULL, query = NULL,
                        visibility = c("project", "public"),
@@ -763,7 +806,7 @@ Auth <- setRefClass(
       copyApp(id = id, project = project, name = name)
     },
 
-    # task ---------------------------------------------------------------------
+    # tasks --------------------------------------------------------------------
     task = function(name = NULL, id = NULL, project = NULL, parent = NULL,
                         exact = FALSE, detail = FALSE,
                         status = c("all", "queued", "draft", "running", "completed", "aborted", "failed"), ...) {
@@ -848,7 +891,7 @@ Auth <- setRefClass(
       res
     },
 
-    # volume -------------------------------------------------------------------
+    # volumes ------------------------------------------------------------------
     mount = function(mountPoint = NULL, projectId = NULL,
                          ignore.stdout = TRUE, sudo = TRUE, ...) {
       fs <<- FS(authToken = token, ...)
@@ -984,32 +1027,50 @@ Auth <- setRefClass(
       res
     },
 
-    # division -----------------------------------------------------------------
+    # actions ------------------------------------------------------------------
+    bulk_file_copy = function(file_ids, project, ...) {
+      "Copy files between projects in a batch."
+      api(
+        path = "action/files/copy",
+        body = list("project" = project, "file_ids" = file_ids),
+        method = "POST", ...
+      )
+    },
+
+    send_feedback = function(text, type = c("idea", "thought", "problem"), referrer = NULL, ...) {
+      "Send feedback to Seven Bridges."
+      text <- paste0(as.character(text), collapse = " ")
+      type <- match.arg(type)
+      if (is.null(referrer)) {
+        username <- suppressMessages(user()$"username")
+        referrer <- paste(username, "sent from sevenbridges-r")
+      }
+      api(
+        path = "action/notifications/feedback",
+        body = list("text" = text, "type" = type, "referrer" = referrer),
+        method = "POST", ...
+      )
+    },
+
+    # enterprise ---------------------------------------------------------------
     division = function(id = NULL, ...) {
+      "List all divisions or get details of a division."
       if (is.null(id)) {
-        req <- api(
-          token = token,
-          path = "divisions/",
-          method = "GET", ...
-        )
+        req <- api(path = "divisions/", method = "GET", ...)
       } else {
-        req <- api(
-          token = token,
-          path = paste0("divisions/", id),
-          method = "GET", ...
-        )
+        req <- api(path = paste0("divisions/", id), method = "GET", ...)
       }
 
       # only one division
       if (is.null(req$items) & !is.null(req$id)) {
         res <- .asDivision(req)
-        res <- setAuth(res, .self, "Division")
+        res$auth <- .self
       }
 
       # multiple divisions
       if (!is.null(req$items)) {
         res <- .asDivisionList(req)
-        for (i in 1L:length(res)) res[[i]] <- setAuth(res[[i]], .self, "Division")
+        setAuth(res, .self, "Division")
       }
 
       res
@@ -1024,48 +1085,134 @@ Auth <- setRefClass(
       .asRate(req)
     },
 
-    # api paths ----------------------------------------------------------------
-    api = function(...,
-                       limit = getOption("sevenbridges")$"limit",
-                       offset = getOption("sevenbridges")$"offset",
-                       fields = NULL, complete = FALSE) {
-      "This call returns all API paths, and pass arguments to api() function with input token and url automatically"
-
-      req <- sevenbridges::api(token,
-        base_url = url, limit = limit,
-        offset = offset, fields = fields, ...
-      )
-      req <- status_check(req)
-
-      if (complete) {
-        N <- as.numeric(headers(response(req))[["x-total-matching-query"]])
-        if (length(N)) .item <- length(req$items)
-        if (.item < N) {
-          pb <- txtProgressBar(min = 1, max = N %/% 100 + 1, style = 3)
-          res <- NULL
-
-          for (i in 1:(N %/% 100 + 1)) {
-            .limit <- 100
-            .offset <- (i - 1) * 100
-            req <- sevenbridges::api(
-              token,
-              base_url = url,
-              limit = .limit, offset = .offset,
-              fields = fields, ...
-            )
-            req <- status_check(req)
-            res$items <- c(res$items, req$items)
-            setTxtProgressBar(pb, i)
-          }
-          cat("\n")
-          res$href <- NULL
-        } else {
-          return(req)
-        }
-        return(res)
+    # bulk ---------------------------------------------------------------------
+    bulk_file_get = function(file_ids, ...) {
+      "Get details of multiple files."
+      if (length(file_ids) <= 100L) {
+        req <- api(
+          path = "bulk/files/get",
+          body = list("file_ids" = file_ids),
+          method = "POST", ...
+        )
+        req_noname <- sapply(req$items, unname)
       } else {
-        return(req)
+        # if more than 100 files, split into 100-sized chunks
+        file_ids_lst <- split(file_ids, ceiling(seq_along(file_ids) / 100L))
+        # loop over
+        req <- vector("list", length(file_ids_lst))
+        for (i in 1L:length(file_ids_lst)) {
+          req[[i]] <- api(
+            path = "bulk/files/get",
+            body = list("file_ids" = file_ids_lst[[i]]),
+            method = "POST", ...
+          )
+        }
+        # merge all
+        req_noname <- sapply(unname(unlist(unlist(req, recursive = FALSE), recursive = FALSE)), unname)
       }
+
+      req <- list("items" = req_noname)
+
+      res <- .asFilesList(req)
+      setAuth(res, .self, "Files")
+
+      res
+    },
+
+    bulk_file_edit = function(...) {
+      "Edit details of multiple files (preserving the omitted fields)."
+      NULL
+    },
+
+    bulk_file_update = function(...) {
+      "Update details of multiple files (removing the omitted fields)."
+      NULL
+    },
+
+    bulk_file_delete = function(file_ids, ...) {
+      "Delete multiple files."
+      if (length(file_ids) <= 100L) {
+        req <- api(
+          path = "bulk/files/delete",
+          body = list("file_ids" = file_ids),
+          method = "POST", ...
+        )
+        req_noname <- sapply(req$items, unname)
+      } else {
+        # if more than 100 files, split into 100-sized chunks
+        file_ids_lst <- split(file_ids, ceiling(seq_along(file_ids) / 100L))
+        # loop over
+        req <- vector("list", length(file_ids_lst))
+        for (i in 1L:length(file_ids_lst)) {
+          req[[i]] <- api(
+            path = "bulk/files/delete",
+            body = list("file_ids" = file_ids_lst[[i]]),
+            method = "POST", ...
+          )
+        }
+        # merge all
+        req_noname <- sapply(unname(unlist(unlist(req, recursive = FALSE), recursive = FALSE)), unname)
+      }
+
+      req <- list("items" = req_noname)
+
+      res <- .asFilesList(req)
+      setAuth(res, .self, "Files")
+
+      res
+    },
+
+    bulk_task_get = function(task_ids, ...) {
+      "Get details of multiple tasks."
+      if (length(task_ids) <= 100L) {
+        req <- api(
+          path = "bulk/tasks/get",
+          body = list("task_ids" = task_ids),
+          method = "POST", ...
+        )
+        req_noname <- sapply(req$items, unname)
+      } else {
+        # if more than 100 tasks, split into 100-sized chunks
+        task_ids_lst <- split(task_ids, ceiling(seq_along(task_ids) / 100L))
+        # loop over
+        req <- vector("list", length(task_ids_lst))
+        for (i in 1L:length(task_ids_lst)) {
+          req[[i]] <- api(
+            path = "bulk/tasks/get",
+            body = list("task_ids" = task_ids_lst[[i]]),
+            method = "POST", ...
+          )
+        }
+        # merge all
+        req_noname <- sapply(unname(unlist(unlist(req, recursive = FALSE), recursive = FALSE)), unname)
+      }
+
+      req <- list("items" = req_noname)
+
+      res <- .asTaskList(req)
+      setAuth(res, .self, "Task")
+
+      res
+    },
+
+    bulk_volume_import = function(...) {
+      "Bulk import from volumes."
+      NULL
+    },
+
+    bulk_volume_export = function(...) {
+      "Bulk export to volumes."
+      NULL
+    },
+
+    bulk_volume_get_import = function(...) {
+      "Get details of a bulk import job."
+      NULL
+    },
+
+    bulk_volume_get_export = function(...) {
+      "Get details of a bulk export job."
+      NULL
     },
 
     # show ---------------------------------------------------------------------
