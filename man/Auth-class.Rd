@@ -22,11 +22,15 @@ could start from this object using cascading style. Please check
 or \code{"file"} (read configurations from a credentials file).
 Default is \code{"direct"}.}
 
-\item{\code{platform}}{[character] Which platform you want to use,
-if platform and url are both not specified, the default is
-\code{"cgc"} (Cancer Genomics Cloud). Possible values include
-\code{"cgc"}, \code{"aws-us"}, \code{"aws-eu"}, \code{"gcp"},
-and \code{"cavatica"}.}
+\item{\code{platform}}{[character] The platform to use.
+If \code{platform} and \code{url} are both not specified,
+the default is \code{"cgc"} (Cancer Genomics Cloud).
+Other possible values include
+\code{"aws-us"} (Seven Bridges Platform - US),
+\code{"aws-eu"} (Seven Bridges Platform - EU),
+\code{"ali-cn"} (Seven Bridges Platform - China),
+\code{"cavatica"} (Cavatica), and
+\code{"f4c"} (FAIR4CURES).}
 
 \item{\code{url}}{[character] Base URL for API. Please only use this when you
 want to specify a platform that is not in the \code{platform} list
