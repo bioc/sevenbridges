@@ -2,10 +2,10 @@ Package: sevenbridges
 Type: Package
 Title: Seven Bridges Platform API Client and Common Workflow Language Tool
     Builder in R
-Version: 1.16.0
+Version: 1.16.1
 Authors@R: c(
     person("Nan", "Xiao", email = "nan.xiao@sevenbridges.com", role = c("aut", "cre")),
-    person("Tengfei", "Yin", email = "tengfei.yin@sevenbridges.com", role = c("aut")),
+    person("Tengfei", "Yin", role = c("aut")),
     person("Emile", "Young", role = c("ctb")),
     person("Dusan", "Randjelovic", role = "ctb"),
     person("Seven Bridges Genomics", role = c("cph", "fnd"))
@@ -41,7 +41,7 @@ Suggests:
     readr
 NeedsCompilation: no
 Encoding: UTF-8
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.0
 Collate:
     sevenbridges-package.R
     class-all.R
