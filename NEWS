@@ -1,3 +1,15 @@
+# sevenbridges 1.17.1
+
+## Bug Fixes
+
+- Fix build issues in R 4.0.0, in which the the default value for `stringsAsFactors` is changed to `FALSE`. Updated the affected `data.frame()` calls which rely on the default automatic vector expansion behavior with explicit `stringsAsFactors = TRUE`.
+
+# sevenbridges 1.15.2
+
+## Improvements
+
+- Added a new argument `authorization` in `Auth` and `api()` to allow specifying the `token` as the access token from Seven Bridges single sign-on (SSO).
+
 # sevenbridges 1.15.1
 
 ## Improvements

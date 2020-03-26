@@ -69,8 +69,14 @@ it usually return the project id and stored with the object.}
 
 \item{\code{create_folder(name, ...)}}{Create a new folder under the parent folder.}
 
-\item{\code{create_marker(name = NULL, start = NULL, end = NULL, chromosome = NULL,
-  private = TRUE, ...)}}{Create a marker.}
+\item{\code{create_marker(
+  name = NULL,
+  start = NULL,
+  end = NULL,
+  chromosome = NULL,
+  private = TRUE,
+  ...
+)}}{Create a marker.}
 
 \item{\code{download(destfile, ..., method = "curl")}}{see `help(download.file)` for more options}
 
@@ -86,11 +92,11 @@ it usually return the project id and stored with the object.}
 
 \item{\code{move_to_folder(folder_id, name_new = NULL, ...)}}{Move a file to a folder.}
 
+\item{\code{setMeta(..., overwrite = FALSE)}}{Set metadata with provided list, when overwrite is set to TRUE, it overwrites the metadata.}
+
 \item{\code{set_meta(..., overwrite = FALSE)}}{Set metadata with provided list, when overwrite is set to TRUE, it overwrites the metadata.}
 
 \item{\code{set_tag(x = NULL, overwrite = TRUE, ...)}}{set a tag for a file, your tag need to be a list or vector}
-
-\item{\code{setMeta(..., overwrite = FALSE)}}{Set metadata with provided list, when overwrite is set to TRUE, it overwrites the metadata.}
 
 \item{\code{tag()}}{get tag from a file}
 
