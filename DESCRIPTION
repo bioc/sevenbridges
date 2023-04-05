@@ -2,16 +2,17 @@ Package: sevenbridges
 Type: Package
 Title: Seven Bridges Platform API Client and Common Workflow Language Tool
     Builder in R
-Version: 1.29.0
+Version: 1.19.2
 Authors@R: c(
-    person("Soner", "Koc", email = "soner.koc@sevenbridges.com", role = c("aut", "cre")),
+    person("Phil", "Webster", email = "phil.webster@velsera.com", role = c("aut", "cre")),
+    person("Soner", "Koc", role = c("aut"), comment = c(ORCID = "0000-0002-0772-6600")),
     person("Nan", "Xiao", role = c("aut")),
     person("Tengfei", "Yin", role = c("aut")),
     person("Dusan", "Randjelovic", role = "ctb"),
     person("Emile", "Young", role = c("ctb")),
-    person("Seven Bridges Genomics", role = c("cph", "fnd"))
+    person("Velsera", role = c("cph", "fnd"))
     )
-Maintainer: Soner Koc <soner.koc@sevenbridges.com>
+Maintainer: Phil Webster <phil.webster@velsera.com>
 Description: R client and utilities for Seven Bridges platform API, from Cancer
     Genomics Cloud to other Seven Bridges supported platforms.
 License: Apache License 2.0 | file LICENSE
@@ -42,7 +43,7 @@ Suggests:
     readr
 NeedsCompilation: no
 Encoding: UTF-8
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.0
 Collate:
     sevenbridges-package.R
     class-all.R
