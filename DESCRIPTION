@@ -2,7 +2,7 @@ Package: sevenbridges
 Type: Package
 Title: Seven Bridges Platform API Client and Common Workflow Language Tool
     Builder in R
-Version: 1.31.0
+Version: 1.32.0
 Authors@R: c(
     person("Phil", "Webster", email = "phil.webster@velsera.com", role = c("aut", "cre")),
     person("Soner", "Koc", role = c("aut"), comment = c(ORCID = "0000-0002-0772-6600")),
